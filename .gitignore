@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment (secrets / local overrides — templates stay tracked)
+.env
+.env.local
+.env.*.local
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# Logs & debug
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE / editors
+.idea/
+.vscode/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.csettings/
+.settings/
+*.swp
+*.swo
+*~
+
+# Cursor (local/agent/cache — rules under .cursor often committed intentionally;
+# ignore the folder so machine-specific state stays out; use `git add -f .cursor/rules` if needed)
+.cursor/
+
+# Coverage & caches
+coverage/
+.nyc_output/
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+
+# Certificates / keys (never commit)
+*.pem
+*.key
+!**/fixtures/**/*.pem
+
+# Optional local tooling
+*.local

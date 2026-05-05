@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: northpeak
+      POSTGRES_PASSWORD: northpeak
+      POSTGRES_DB: northpeak
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U northpeak -d northpeak']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://northpeak:northpeak@postgres:5432/northpeak?schema=public
+      JWT_SECRET: dev-jwt-secret-change-in-prod
+      WEB_ORIGIN: http://localhost:3000
+      PORT: 4000
+      ALLOW_REGISTRATION: 'true'
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '3000:80'
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

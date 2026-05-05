@@ -1,0 +1,31 @@
+{
+  "name": "playwright-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep @smoke",
+    "test:e2e:transfer": "playwright test --grep @transfer",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "test:ui": "playwright test --ui",
+    "backend:dev": "npm run start:dev --prefix backend",
+    "frontend:dev": "npm run dev --prefix frontend",
+    "compose:up": "docker compose up --build",
+    "compose:down": "docker compose down"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0",
+    "dotenv": "^16.5.0",
+    "typescript": "^6.0.3"
+  }
+}
