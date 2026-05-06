@@ -28,8 +28,6 @@ Monorepo layout:
 
 Copy **`.env.example`** for local tooling env vars; Compose injects DB/JWT values for containers.
 
-**Feature snapshot:** Bill pay supports **scheduled** and **instant** payments with **payee-aware biller suggestions** and editable scheduled rows. **Transfers** keep strict account eligibility (deposit accounts only for transfer destination selection). **Cards** support primary-card marking, cancel confirmation with strict zero-balance requirement, and lost-card replacement that moves history. UI includes **breadcrumbs**, **toasts** (top-right), **payee edit/delete**, and closed-state sections for cards/accounts.
-
 ---
 
 ## 🧭 Quick start (recommended)
