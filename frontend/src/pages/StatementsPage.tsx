@@ -42,11 +42,11 @@ export function StatementsPage() {
             mask: a.mask,
             type: a.type,
             balanceCents: a.balanceCents,
-            frozen: a.type === 'CREDIT' ? false : a.frozen,
+            frozen: a.frozen,
           },
           formatMoney,
         ),
-        disabled: !!a.frozen && a.type !== 'CREDIT',
+        disabled: !!a.frozen && (a.type === 'CHECKING' || a.type === 'SAVINGS'),
       })),
     [stmtAccounts, formatMoney],
   );
