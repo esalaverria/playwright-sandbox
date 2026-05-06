@@ -19,9 +19,12 @@ export function CurrencyTextField({ label, value, onChangeValue, className, id, 
           {label}
         </Label>
       ) : null}
-      <InputGroup fullWidth>
-        <InputGroup.Prefix className="pl-3 font-bold text-indigo-700">$</InputGroup.Prefix>
+      <InputGroup fullWidth className="gap-0">
+        <InputGroup.Prefix className="border-r border-neutral-200 pr-3 pl-3 font-bold text-indigo-700">
+          $
+        </InputGroup.Prefix>
         <InputGroup.Input
+          className="!pl-4"
           id={inputId}
           aria-label={typeof label === 'string' ? label : undefined}
           inputMode="decimal"

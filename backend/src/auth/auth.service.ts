@@ -83,6 +83,14 @@ export class AuthService {
       },
     });
 
+    await this.prisma.message.create({
+      data: {
+        userId: user.id,
+        subject: 'Welcome to NorthPeak',
+        body: 'A welcome deposit of $100.00 was posted to your Primary checking account.',
+      },
+    });
+
     const payload: JwtPayload = { sub: user.id, email: user.email };
     const token = await this.jwt.signAsync(payload);
     return { token, user };

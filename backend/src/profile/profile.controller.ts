@@ -3,6 +3,7 @@ import { IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
 import * as bcrypt from 'bcryptjs';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AccountsService } from '../accounts/accounts.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 class PatchMeDto {
@@ -34,10 +35,23 @@ class PasswordDto {
 @Controller('me')
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private accounts: AccountsService,
+  ) {}
 
   @Patch()
   async patch(@Req() req: Request & { user: { userId: string } }, @Body() dto: PatchMeDto) {
+    const beforeLimit =
+      dto.defaultCardLimitCents !== undefined
+        ? (
+            await this.prisma.user.findUnique({
+              where: { id: req.user.userId },
+              select: { defaultCardLimitCents: true },
+            })
+          )?.defaultCardLimitCents
+        : undefined;
+
     const user = await this.prisma.user.update({
       where: { id: req.user.userId },
       data: {
@@ -49,6 +63,18 @@ export class ProfileController {
       },
       select: { id: true, email: true, fullName: true, phone: true, defaultCardLimitCents: true },
     });
+
+    if (
+      beforeLimit !== undefined &&
+      dto.defaultCardLimitCents !== undefined &&
+      dto.defaultCardLimitCents !== beforeLimit
+    ) {
+      await this.accounts.logActivity(req.user.userId, 'DEFAULT_CARD_LIMIT_UPDATED', {
+        previousCents: beforeLimit,
+        nextCents: dto.defaultCardLimitCents,
+      });
+    }
+
     return { user };
   }
 

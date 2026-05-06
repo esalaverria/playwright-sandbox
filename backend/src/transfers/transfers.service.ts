@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountType, LedgerStatus } from '../generated/prisma/client';
+import { AccountType, LedgerStatus, Prisma } from '../generated/prisma/client';
 import {
   canReceiveTransferCredit,
   canUseAsDebitSourceForBanking,
@@ -21,6 +21,26 @@ type CreditCapAccount = {
 @Injectable()
 export class TransfersService {
   constructor(private prisma: PrismaService) {}
+
+  private async notifyIncomingCredit(
+    tx: Prisma.TransactionClient,
+    recipientUserId: string,
+    accountNickname: string,
+    amountCents: number,
+    ledgerDescription: string,
+  ) {
+    const dollars = (amountCents / 100).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    await tx.message.create({
+      data: {
+        userId: recipientUserId,
+        subject: 'Transaction received',
+        body: `${accountNickname} received $${dollars}. ${ledgerDescription}`,
+      },
+    });
+  }
 
   /** Debt owed on a credit line (positive cents). */
   private debtCents(balanceCents: number): number {
@@ -126,6 +146,8 @@ export class TransfersService {
           status: LedgerStatus.POSTED,
         },
       });
+
+      await this.notifyIncomingCredit(tx, to.userId, to.nickname, body.amountCents, `${memo} ← ${from.nickname}`);
 
       return { ok: true, fromBalanceCents: fromBal, toBalanceCents: toBal };
     });
@@ -274,6 +296,14 @@ export class TransfersService {
           status: LedgerStatus.POSTED,
         },
       });
+
+      await this.notifyIncomingCredit(
+        tx,
+        toAcc.userId,
+        toAcc.nickname,
+        body.amountCents,
+        `${memo} ← ${sender!.email}`,
+      );
 
       return { ok: true, recipientCreditCents: body.amountCents, toBalanceCents: toBal };
     });

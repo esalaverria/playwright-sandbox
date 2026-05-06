@@ -1,11 +1,14 @@
 import { Button, Chip, Input, Label, Modal, useOverlayState } from '@heroui/react';
 import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../notifications/ToastProvider';
+import { usePrivacy } from '../privacy/PrivacyProvider';
 import { CurrencyTextField } from '../ui/CurrencyTextField';
 import { AccountSelect } from '../ui/AccountSelect';
+import { formatAccountOptionLabel } from '../ui/account-option-label';
+import { UtcIsoDatePicker } from '../ui/UtcIsoDatePicker';
 
 type BillRow = {
   id: string;
@@ -33,9 +36,16 @@ function apiErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
+function utcIsoInDays(daysFromNow: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + daysFromNow);
+  return d.toISOString().slice(0, 10);
+}
+
 export function BillsPage() {
   const qc = useQueryClient();
   const toast = useToast();
+  const { formatMoney } = usePrivacy();
   const [tab, setTab] = useState<BillTab>('schedule');
   const [billAmount, setBillAmount] = useState('');
   const [payNowAmount, setPayNowAmount] = useState('');
@@ -55,6 +65,7 @@ export function BillsPage() {
         accounts: {
           id: string;
           nickname: string;
+          mask: string;
           type: string;
           balanceCents: number;
           closedAt?: string | null;
@@ -66,20 +77,39 @@ export function BillsPage() {
     },
   });
 
-  const payFromAccounts = (accounts.data ?? []).filter((a) => {
-    if (a.closedAt) return false;
-    if (a.type === 'CHECKING' || a.type === 'SAVINGS') return true;
-    return a.type === 'CREDIT' && a.cardLifecycle === 'ACTIVE';
-  });
-  const payFromSelectOptions = payFromAccounts.map((a) => ({
-    id: a.id,
-    label: `${a.nickname} (${(a.balanceCents / 100).toFixed(2)}) ${a.frozen ? '· Frozen' : ''}`.trim(),
-    disabled: !!a.frozen,
-  }));
+  const payFromAccounts = useMemo(
+    () =>
+      (accounts.data ?? []).filter((a) => {
+        if (a.closedAt) return false;
+        if (a.type === 'CHECKING' || a.type === 'SAVINGS') return true;
+        return a.type === 'CREDIT' && a.cardLifecycle === 'ACTIVE';
+      }),
+    [accounts.data],
+  );
+  const payFromSelectOptions = useMemo(
+    () =>
+      payFromAccounts.map((a) => ({
+        id: a.id,
+        label: formatAccountOptionLabel(
+          {
+            nickname: a.nickname,
+            mask: a.mask,
+            type: a.type,
+            balanceCents: a.balanceCents,
+            frozen: a.frozen,
+          },
+          formatMoney,
+        ),
+        disabled: !!a.frozen,
+      })),
+    [payFromAccounts, formatMoney],
+  );
 
   const [scheduleFromAccountId, setScheduleFromAccountId] = useState('');
   const [payNowFromAccountId, setPayNowFromAccountId] = useState('');
   const [editFromAccountId, setEditFromAccountId] = useState('');
+  const [scheduleDueIso, setScheduleDueIso] = useState(() => utcIsoInDays(7));
+  const [editDueIso, setEditDueIso] = useState('');
 
   useEffect(() => {
     const list = payFromAccounts;
@@ -89,7 +119,7 @@ export function BillsPage() {
     };
     setScheduleFromAccountId((c) => resolve(c));
     setPayNowFromAccountId((c) => resolve(c));
-  }, [accounts.data]);
+  }, [payFromAccounts]);
 
   const payees = useQuery({
     queryKey: ['payees'],
@@ -123,7 +153,10 @@ export function BillsPage() {
 
   useEffect(() => {
     const row = (bills.data ?? []).find((b) => b.id === editId);
-    if (row) setEditFromAccountId(row.fromAccountId);
+    if (row) {
+      setEditFromAccountId(row.fromAccountId);
+      setEditDueIso(row.dueDate.slice(0, 10));
+    }
   }, [editId, bills.data]);
 
   const create = useMutation({
@@ -214,11 +247,12 @@ export function BillsPage() {
               onSubmit={(e: FormEvent<HTMLFormElement>) => {
                 e.preventDefault();
                 const fd = new FormData(e.currentTarget);
+                if (!scheduleDueIso) return;
                 create.mutate({
                   billerName: biller,
                   fromAccountId: scheduleFromAccountId,
                   amountCents: Math.round(Number(billAmount) * 100),
-                  dueDate: String(fd.get('dueDate') ?? ''),
+                  dueDate: scheduleDueIso,
                   memo: String(fd.get('memo') ?? '') || undefined,
                   mode: 'schedule',
                 });
@@ -258,12 +292,12 @@ export function BillsPage() {
                 name="fromAccountId"
               />
               <CurrencyTextField label="Amount" value={billAmount} onChangeValue={setBillAmount} required />
-              <div>
-                <Label htmlFor="due-date" className="font-medium">
-                  Due date
-                </Label>
-                <Input id="due-date" type="date" name="dueDate" required className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" />
-              </div>
+              <UtcIsoDatePicker
+                label="Due date (UTC)"
+                aria-label="Bill due UTC date"
+                valueIso={scheduleDueIso}
+                onChangeIso={setScheduleDueIso}
+              />
               <InputLike name="memo" label="Memo" />
               <Button type="submit" variant="primary">
                 Schedule
@@ -428,7 +462,7 @@ export function BillsPage() {
                           billerName: String(fd.get('billerName') ?? ''),
                           fromAccountId: editFromAccountId,
                           amountCents: Math.round(Number(fd.get('amount') ?? 0) * 100),
-                          dueDate: String(fd.get('dueDate') ?? ''),
+                          dueDate: editDueIso,
                           memo: memoRaw.length ? memoRaw : '',
                         });
                       }}
@@ -470,19 +504,12 @@ export function BillsPage() {
                             className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 font-variant-numeric tabular-nums text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                           />
                         </div>
-                        <div>
-                          <Label htmlFor="edit-due" className="font-medium">
-                            Due date
-                          </Label>
-                          <Input
-                            id="edit-due"
-                            name="dueDate"
-                            type="date"
-                            required
-                            defaultValue={editing.dueDate.slice(0, 10)}
-                            className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                          />
-                        </div>
+                        <UtcIsoDatePicker
+                          label="Due date (UTC)"
+                          aria-label="Edit bill due UTC date"
+                          valueIso={editDueIso}
+                          onChangeIso={setEditDueIso}
+                        />
                         <div>
                           <Label htmlFor="edit-memo" className="font-medium">
                             Memo

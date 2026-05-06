@@ -6,6 +6,7 @@ import { usePrivacy } from '../privacy/PrivacyProvider';
 import { useToast } from '../notifications/ToastProvider';
 import { CurrencyTextField } from '../ui/CurrencyTextField';
 import { AccountSelect } from '../ui/AccountSelect';
+import { formatAccountOptionLabel } from '../ui/account-option-label';
 
 type TransferTabKey = 'internal' | 'peer';
 
@@ -17,7 +18,7 @@ type Account = {
   balanceCents: number;
   closedAt?: string | null;
   frozen?: boolean;
-  cardLifecycle?: string;
+  cardLifecycle?: string | null;
 };
 
 function firstUsableDepositId(rows: Pick<Account, 'id' | 'frozen'>[]): string {
@@ -84,6 +85,7 @@ export function TransferPage() {
       await qc.invalidateQueries({ queryKey: ['tx'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-month'] });
       await qc.invalidateQueries({ queryKey: ['activity-log'] });
+      await qc.invalidateQueries({ queryKey: ['messages-unread'] });
     },
     onError: () => toast('Transfer failed.', 'error'),
   });
@@ -103,6 +105,7 @@ export function TransferPage() {
       await qc.invalidateQueries({ queryKey: ['tx'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-month'] });
       await qc.invalidateQueries({ queryKey: ['activity-log'] });
+      await qc.invalidateQueries({ queryKey: ['messages-unread'] });
     },
     onError: () => toast('Peer transfer failed.', 'error'),
   });
@@ -130,17 +133,43 @@ export function TransferPage() {
 
   const fromOptions = fromAccounts.map((a) => ({
     id: a.id,
-    label: `${a.nickname} (${formatMoney(a.balanceCents)})${a.frozen ? ' · Frozen' : ''}`,
+    label: formatAccountOptionLabel(
+      {
+        nickname: a.nickname,
+        mask: a.mask,
+        type: a.type,
+        balanceCents: a.balanceCents,
+        frozen: a.frozen,
+      },
+      formatMoney,
+    ),
     disabled: !!a.frozen,
   }));
   const internalToOptions = internalToAccounts.map((a) => ({
     id: a.id,
-    label: `${a.nickname} (${formatMoney(a.balanceCents)})${a.frozen ? ' · Frozen' : ''}`,
+    label: formatAccountOptionLabel(
+      {
+        nickname: a.nickname,
+        mask: a.mask,
+        type: a.type,
+        balanceCents: a.balanceCents,
+        frozen: a.frozen,
+      },
+      formatMoney,
+    ),
     disabled: !!a.frozen,
   }));
   const peerToOptions = peerAccounts.map((a) => ({
     id: a.id,
-    label: `${a.nickname} ${a.mask} · ${a.type} · ${formatMoney(a.balanceCents)}`,
+    label: formatAccountOptionLabel(
+      {
+        nickname: a.nickname,
+        mask: a.mask,
+        type: a.type,
+        balanceCents: a.balanceCents,
+      },
+      formatMoney,
+    ),
   }));
 
   const inputClass = 'mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
@@ -149,7 +178,7 @@ export function TransferPage() {
     <div className="flex max-w-xl flex-col gap-6">
       <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">Transfer</h1>
 
-      <p className="text-muted text-sm leading-relaxed">
+      <p className="text-sm leading-relaxed text-neutral-600">
         Transfers can only come from checking or savings. Credit cards are for payments (Pay card, Bill pay), not
         moving money to yourself or others.
       </p>
@@ -283,7 +312,17 @@ export function TransferPage() {
               placeholder="Select account"
               options={fromAccounts.map((a) => ({
                 id: a.id,
-                label: `${a.nickname} (${formatMoney(a.balanceCents)})`,
+                label: formatAccountOptionLabel(
+                  {
+                    nickname: a.nickname,
+                    mask: a.mask,
+                    type: a.type,
+                    balanceCents: a.balanceCents,
+                    frozen: a.frozen,
+                  },
+                  formatMoney,
+                ),
+                disabled: !!a.frozen,
               }))}
               value={peerFrom}
               onChange={setPeerFrom}
@@ -298,7 +337,7 @@ export function TransferPage() {
               onChange={setPeerTo}
             />
             {!preview.data?.userExists ? (
-              <p className="text-muted text-xs leading-relaxed">Enter an email that belongs to another NorthPeak user.</p>
+              <p className="text-xs leading-relaxed text-neutral-600">Enter an email that belongs to another NorthPeak user.</p>
             ) : null}
             <CurrencyTextField label="Amount (USD)" value={peerAmount} onChangeValue={setPeerAmount} required />
             <TextField name="memo">

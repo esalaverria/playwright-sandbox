@@ -26,7 +26,7 @@ export function PageBreadcrumbs() {
   if (pathname === '/' && segments.length === 0) {
     return (
       <nav className="mb-4 text-sm" aria-label="Breadcrumb">
-        <span className="font-semibold text-foreground">Dashboard</span>
+        <span className="font-semibold text-neutral-900">Dashboard</span>
       </nav>
     );
   }
@@ -45,7 +45,7 @@ export function PageBreadcrumbs() {
     <nav className="mb-6 flex flex-wrap items-center gap-1 text-sm" aria-label="Breadcrumb">
       {crumbs.map((c, idx) =>
         c.last ? (
-          <span key={`${c.to}-${idx}`} className="font-semibold text-foreground">
+          <span key={`${c.to}-${idx}`} className="font-semibold text-neutral-900">
             {c.label}
           </span>
         ) : (
@@ -53,7 +53,7 @@ export function PageBreadcrumbs() {
             <RouterLink to={c.to} className="font-medium text-indigo-600 hover:underline">
               {c.label}
             </RouterLink>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted opacity-70" aria-hidden />
+            <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500 opacity-80" aria-hidden />
           </span>
         ),
       )}

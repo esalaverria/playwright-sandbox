@@ -25,7 +25,10 @@ export function ProfilePage() {
   const patch = useMutation({
     mutationFn: async (payload: { fullName?: string; phone?: string; defaultCardLimitCents?: number }) =>
       api.patch('/me', payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['me'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['me'] });
+      void qc.invalidateQueries({ queryKey: ['activity-log'] });
+    },
   });
 
   const pwd = useMutation({

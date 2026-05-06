@@ -2,12 +2,15 @@ import { Button, Chip, Input, Label, Modal, ProgressBar, Switch, useOverlayState
 import { AlertTriangle, CreditCard, Plus } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { api } from '../api/client';
 import { useToast } from '../notifications/ToastProvider';
 import { usePrivacy } from '../privacy/PrivacyProvider';
+import { AppSelect } from '../ui/AppSelect';
+import { AccountSelect } from '../ui/AccountSelect';
 import { CurrencyTextField } from '../ui/CurrencyTextField';
+import { formatAccountOptionLabel } from '../ui/account-option-label';
 
 type CreditAccount = {
   id: string;
@@ -50,8 +53,8 @@ function formatExp(m?: number | null, y?: number | null): string {
   return `${String(m).padStart(2, '0')}/${y}`;
 }
 
-const paySelect =
-  'bg-field text-field mt-2 flex-1 min-w-[200px] cursor-pointer rounded-xl border px-4 py-2.5 outline-none transition-[border,color,background] focus-visible:border-accent focus-visible:ring-[2px] focus-visible:ring-focus';
+const cancelYellowClass =
+  'border border-amber-500 bg-amber-500 px-4 text-white hover:bg-amber-600 [&]:text-white';
 
 export function CardsPage() {
   const qc = useQueryClient();
@@ -89,7 +92,30 @@ export function CardsPage() {
   });
 
   const creditCards = (accounts.data ?? []).filter((a) => a.type === 'CREDIT');
-  const fundingAccounts = (accounts.data ?? []).filter((a) => a.type === 'CHECKING' || a.type === 'SAVINGS');
+  const fundingAccounts = useMemo(
+    () => (accounts.data ?? []).filter((a) => a.type === 'CHECKING' || a.type === 'SAVINGS'),
+    [accounts.data],
+  );
+
+  const fundingOptions = useMemo(
+    () =>
+      fundingAccounts.map((a) => ({
+        id: a.id,
+        label: formatAccountOptionLabel(
+          {
+            nickname: a.nickname,
+            mask: a.mask,
+            type: a.type,
+            balanceCents: a.balanceCents,
+            frozen: a.frozen,
+          },
+          formatMoney,
+        ),
+        disabled: !!a.frozen,
+      })),
+    [fundingAccounts, formatMoney],
+  );
+
   const activeCards = [...creditCards]
     .filter((a) => a.cardLifecycle === 'ACTIVE' && !a.closedAt)
     .sort((a, b) => {
@@ -148,6 +174,7 @@ export function CardsPage() {
       await qc.invalidateQueries({ queryKey: ['tx'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-month'] });
       await qc.invalidateQueries({ queryKey: ['activity-log'] });
+      await qc.invalidateQueries({ queryKey: ['messages-unread'] });
     },
     onError: () => toast('Payment failed — check funds or card status.', 'error'),
   });
@@ -218,22 +245,25 @@ export function CardsPage() {
         const limit = c.creditLimitCents;
         const debtCents = Math.max(0, -c.balanceCents);
         const util = limit != null && limit > 0 ? Math.min(100, Math.round((debtCents / limit) * 100)) : 0;
-        const payFrom = payFromByCard[c.id] ?? fundingAccounts[0]?.id ?? '';
+        const payFrom = payFromByCard[c.id] ?? fundingAccounts.find((a) => !a.frozen)?.id ?? fundingAccounts[0]?.id ?? '';
         const payAmt = payAmountByCard[c.id] ?? '';
         const isActive = c.cardLifecycle === 'ACTIVE';
         const brand = c.cardBrand === 'MASTERCARD' ? 'Mastercard' : 'Visa';
         const sens = revealDetails[c.id];
+        const frozenChrome = c.frozen && isActive;
 
         return (
           <article
             key={c.id}
-            className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
+            className={`rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-[opacity,filter,background-color] duration-150 ${
+              frozenChrome ? 'bg-neutral-50/90 opacity-[0.96] saturate-75' : ''
+            }`}
           >
-            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="flex flex-row gap-4">
                 <CreditCard aria-hidden className="size-10 shrink-0 text-indigo-600" strokeWidth={1.75} />
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-extrabold text-neutral-900">{c.nickname}</h2>
                     <button
                       type="button"
@@ -255,29 +285,69 @@ export function CardsPage() {
                     >
                       <Chip.Label>{c.cardLifecycle.replace(/_/g, ' ')}</Chip.Label>
                     </Chip>
-                    <span className="text-xs font-medium text-neutral-500">{c.mask}</span>
                   </div>
                 </div>
               </div>
-              <p className="text-sm font-semibold text-neutral-600 md:text-right">{c.nameOnCard}</p>
+
+              <div className="flex shrink-0 items-center gap-3 md:self-start">
+                <Switch
+                  isSelected={c.frozen}
+                  isDisabled={!isActive}
+                  onChange={(next: boolean) => toggleFreeze.mutate({ id: c.id, frozen: next })}
+                >
+                  <Switch.Content className="flex cursor-pointer items-center gap-2">
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    <span className="text-sm font-medium text-neutral-800">Freeze card</span>
+                  </Switch.Content>
+                </Switch>
+              </div>
             </div>
 
-            <p className="mt-4 text-sm text-neutral-800">
-              Balance owed:{' '}
-              <strong className="tabular-nums">{formatMoney(c.balanceCents)}</strong>
+            <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm font-semibold text-neutral-800">
+              <span>
+                <span className="font-medium text-neutral-500">Card </span>
+                {c.mask}
+              </span>
+              <span className="hidden text-neutral-300 sm:inline" aria-hidden>
+                |
+              </span>
+              <span>
+                <span className="font-medium text-neutral-500">Expires </span>
+                {formatExp(c.expMonth, c.expYear)}
+              </span>
+            </div>
+
+            <p className="mt-4 text-2xl font-extrabold tabular-nums tracking-tight text-neutral-900">
+              Balance owed: {formatMoney(c.balanceCents)}
             </p>
 
             {limit != null ? (
               <>
-                <p className="mt-2 text-sm text-neutral-700">
-                  Limit: {formatMoney(limit)} · Utilization {util}%
-                </p>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-neutral-700">
+                    Limit: {formatMoney(limit)} · Utilization {util}%
+                  </p>
+                  <Switch
+                    isSelected={c.allowOverLimit}
+                    isDisabled={!isActive}
+                    onChange={(next: boolean) => toggleOverLimit.mutate({ id: c.id, allowOverLimit: next })}
+                  >
+                    <Switch.Content className="flex cursor-pointer items-center gap-2">
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      <span className="whitespace-nowrap text-sm font-medium text-neutral-800">Allow over limit</span>
+                    </Switch.Content>
+                  </Switch>
+                </div>
                 <ProgressBar.Root
                   value={util}
                   minValue={0}
                   maxValue={100}
                   aria-label="Credit utilization"
-                  className="mt-3"
+                  className="mt-2"
                 >
                   <ProgressBar.Track className="h-2 rounded-full bg-neutral-200">
                     <ProgressBar.Fill />
@@ -288,75 +358,54 @@ export function CardsPage() {
               <p className="mt-4 block text-xs text-neutral-500">No credit limit on file.</p>
             )}
 
-            <p className="mt-4 text-sm text-neutral-600">Expires {formatExp(c.expMonth, c.expYear)}</p>
-
-            <div className="mt-4 flex flex-wrap gap-8">
-              <Switch
-                isSelected={c.frozen}
-                isDisabled={!isActive}
-                onChange={(next: boolean) => toggleFreeze.mutate({ id: c.id, frozen: next })}
-              >
-                <Switch.Content className="flex cursor-pointer items-center gap-3">
-                  <Switch.Control className="">
-                    <Switch.Thumb />
-                  </Switch.Control>
-                  <span className="text-sm font-medium text-neutral-800">Freeze card</span>
-                </Switch.Content>
-              </Switch>
-              <Switch
-                isSelected={c.allowOverLimit}
-                isDisabled={!isActive}
-                onChange={(next: boolean) => toggleOverLimit.mutate({ id: c.id, allowOverLimit: next })}
-              >
-                <Switch.Content className="flex cursor-pointer items-center gap-3">
-                  <Switch.Control>
-                    <Switch.Thumb />
-                  </Switch.Control>
-                  <span className="text-sm font-medium text-neutral-800">Allow over limit</span>
-                </Switch.Content>
-              </Switch>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                isDisabled={!isActive || cancelCard.isPending}
-                onPress={() => setCancelDialog(c.id)}
-              >
-                Cancel card
-              </Button>
-              <Button
-                size="sm"
-                variant="danger-soft"
-                isDisabled={!isActive || reportLostReplace.isPending}
-                onPress={() => setLostDialog(c.id)}
-              >
-                <AlertTriangle aria-hidden className="mr-1.5 inline size-4" />
-                Report lost
-              </Button>
-              {!sens ? (
-                <Button size="sm" variant="ghost" onPress={() => fetchSensitive(c.id)}>
-                  Reveal card numbers
-                </Button>
-              ) : (
-                <Button size="sm" variant="ghost" onPress={() => hideSensitive(c.id)}>
-                  Hide card numbers
-                </Button>
-              )}
-              {c.cardLifecycle !== 'LOST_REPORTED' ? (
-                <RouterLink
-                  to={`/accounts/${c.id}`}
-                  className="inline-flex items-center rounded-lg border border-neutral-300 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-2">
+                {!sens ? (
+                  <Button size="sm" variant="ghost" onPress={() => fetchSensitive(c.id)}>
+                    Reveal card details
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="ghost" onPress={() => hideSensitive(c.id)}>
+                    Hide card details
+                  </Button>
+                )}
+                {c.cardLifecycle !== 'LOST_REPORTED' ? (
+                  <RouterLink
+                    to={`/accounts/${c.id}`}
+                    className="inline-flex items-center rounded-lg border border-neutral-300 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+                  >
+                    View transactions
+                  </RouterLink>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className={cancelYellowClass}
+                  isDisabled={!isActive || cancelCard.isPending}
+                  onPress={() => setCancelDialog(c.id)}
                 >
-                  View transactions
-                </RouterLink>
-              ) : null}
+                  Cancel card
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger-soft"
+                  isDisabled={!isActive || reportLostReplace.isPending}
+                  onPress={() => setLostDialog(c.id)}
+                >
+                  <AlertTriangle aria-hidden className="mr-1.5 inline size-4" />
+                  Report lost
+                </Button>
+              </div>
             </div>
 
             {sens ? (
               <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
                 <div className="space-y-2">
+                  {sens.nameOnCard ? (
+                    <p className="text-sm font-semibold text-neutral-800">Name on card: {sens.nameOnCard}</p>
+                  ) : null}
                   <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Card number</p>
                   <p className="font-mono text-base tracking-wide text-neutral-900">
                     {sens.panFull?.replace(/(\d{4})/g, '$1 ').trim()}
@@ -391,23 +440,14 @@ export function CardsPage() {
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
                 <div className="min-w-[200px] flex-1">
-                  <Label htmlFor={`pay-from-${c.id}`}>Pay from</Label>
-                  <select
-                    id={`pay-from-${c.id}`}
-                    required
+                  <AccountSelect
+                    label="Pay from"
                     aria-label={`Pay ${c.nickname} from account`}
-                    className={paySelect}
+                    placeholder="Select account"
+                    options={fundingOptions}
                     value={payFrom}
-                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                      setPayFromByCard((m) => ({ ...m, [c.id]: e.target.value }))
-                    }
-                  >
-                    {fundingAccounts.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.nickname} ({formatMoney(a.balanceCents)})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(id) => setPayFromByCard((m) => ({ ...m, [c.id]: id }))}
+                  />
                 </div>
                 <div className="min-w-[160px] flex-1">
                   <CurrencyTextField
@@ -441,7 +481,9 @@ export function CardsPage() {
               <tbody className="divide-y divide-neutral-100">
                 {pagedClosed.map((c) => (
                   <tr key={c.id}>
-                    <td className="px-3 py-2">{c.nickname} · {c.mask}</td>
+                    <td className="px-3 py-2">
+                      {c.nickname} · {c.mask}
+                    </td>
                     <td className="px-3 py-2">{c.cardLifecycle.replace(/_/g, ' ')}</td>
                     <td className="px-3 py-2">{formatMoney(c.balanceCents)}</td>
                     <td className="px-3 py-2">{formatExp(c.expMonth, c.expYear)}</td>
@@ -565,22 +607,17 @@ export function CardsPage() {
                     className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="new-card-brand" className="font-medium">
-                    Brand
-                  </Label>
-                  <select
-                    id="new-card-brand"
-                    value={cardBrand}
-                    className={`${paySelect} mt-2 w-full`}
-                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                      setCardBrand(e.target.value as 'VISA' | 'MASTERCARD')
-                    }
-                  >
-                    <option value="VISA">Visa</option>
-                    <option value="MASTERCARD">Mastercard</option>
-                  </select>
-                </div>
+                <AppSelect
+                  label="Brand"
+                  aria-label="New card brand"
+                  placeholder="Select brand"
+                  options={[
+                    { id: 'VISA', label: 'Visa' },
+                    { id: 'MASTERCARD', label: 'Mastercard' },
+                  ]}
+                  value={cardBrand}
+                  onChange={(id) => setCardBrand(id as 'VISA' | 'MASTERCARD')}
+                />
               </Modal.Body>
               <Modal.Footer className="flex justify-end gap-2">
                 <Button variant="ghost" onPress={() => newCardModal.close()}>

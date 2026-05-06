@@ -13,6 +13,7 @@ const LABELS: Record<string, string> = {
   CARD_UNFROZEN: 'Unfroze card',
   OVERLIMIT_TOGGLED: 'Updated over-limit setting',
   CARD_DETAILS_VIEWED: 'Viewed full card details',
+  DEFAULT_CARD_LIMIT_UPDATED: 'Updated default new card limit',
   PAYEE_CREATED: 'Added a payee',
   PAYEE_UPDATED: 'Updated a payee',
   PAYEE_DELETED: 'Deleted a payee',
@@ -32,7 +33,11 @@ function humanMeta(
           ? 'New card'
           : k === 'lostAccountId'
             ? 'Previous card'
-            : k.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+            : k === 'previousCents'
+              ? 'Previous limit (¢)'
+              : k === 'nextCents'
+                ? 'New limit (¢)'
+                : k.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
     if (k.toLowerCase().includes('accountid') && typeof v === 'string') {
       const nickname = accountNameById[v];
       parts.push(`${label}: ${nickname ? `${nickname} (${v.slice(0, 10)}…)` : `${v.slice(0, 10)}…`}`);

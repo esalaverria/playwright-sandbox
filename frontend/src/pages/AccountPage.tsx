@@ -1,4 +1,4 @@
-import { Button, Input, Label, Skeleton } from '@heroui/react';
+import { Button, Description, Input, Label, Skeleton } from '@heroui/react';
 import type { ChangeEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -105,12 +105,15 @@ export function AccountPage() {
             <Label htmlFor="q-desc" className="mb-2 block font-medium text-neutral-800">
               Search description
             </Label>
+            <Description className="-mt-1 mb-0 text-xs font-medium text-transparent select-none" aria-hidden>
+              yyyy-mm-dd (aligns date filter rows)
+            </Description>
             <Input
               id="q-desc"
               value={qDraft}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setQDraft(e.target.value)}
               placeholder="Describe a transaction…"
-              className={searchClass}
+              className={`mt-2 ${searchClass}`}
             />
           </div>
           <div className="sm:col-span-6 lg:col-span-3">

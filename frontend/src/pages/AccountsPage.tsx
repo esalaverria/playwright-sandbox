@@ -7,6 +7,9 @@ import { Link as RouterLink } from 'react-router-dom';
 import { api, delay } from '../api/client';
 import { usePrivacy } from '../privacy/PrivacyProvider';
 import { useToast } from '../notifications/ToastProvider';
+import { AppSelect } from '../ui/AppSelect';
+import { AccountSelect } from '../ui/AccountSelect';
+import { formatAccountOptionLabel } from '../ui/account-option-label';
 
 type AccountRow = {
   id: string;
@@ -18,9 +21,6 @@ type AccountRow = {
   cardLifecycle?: string | null;
   closedAt?: string | null;
 };
-
-const selectFull =
-  'bg-field text-field mt-2 w-full cursor-pointer rounded-xl border px-4 py-2.5 outline-none transition-[border,color,background] focus-visible:border-accent focus-visible:ring-[2px] focus-visible:ring-focus';
 
 const linkOutline =
   'inline-flex items-center justify-center rounded-xl border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50';
@@ -127,7 +127,19 @@ export function AccountsPage() {
   const totalPages = Math.max(1, Math.ceil(displayAccounts.length / pageSize));
 
   const closingRow = closeId ? depositAccounts.find((a) => a.id === closeId) : null;
-  const destinations = depositAccounts.filter((a) => a.id !== closeId);
+  const destinations = depositAccounts.filter((a) => a.id !== closeId && !a.closedAt);
+  const destinationSelectOptions = destinations.map((d) => ({
+    id: d.id,
+    label: formatAccountOptionLabel(
+      {
+        nickname: d.nickname,
+        mask: d.mask,
+        type: d.type,
+        balanceCents: d.balanceCents,
+      },
+      formatMoney,
+    ),
+  }));
 
   return (
     <div className="flex flex-col gap-8">
@@ -258,22 +270,17 @@ export function AccountsPage() {
                 <Modal.Heading>Open new account</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="flex flex-col gap-4">
-                <div>
-                  <Label htmlFor="acct-type" className="mb-2 block font-medium">
-                    Type
-                  </Label>
-                  <select
-                    id="acct-type"
-                    value={newType}
-                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                      setNewType(e.target.value as 'CHECKING' | 'SAVINGS')
-                    }
-                    className={selectFull}
-                  >
-                    <option value="CHECKING">Checking</option>
-                    <option value="SAVINGS">Savings</option>
-                  </select>
-                </div>
+                <AppSelect
+                  label="Type"
+                  aria-label="New account type"
+                  placeholder="Select type"
+                  options={[
+                    { id: 'CHECKING', label: 'Checking' },
+                    { id: 'SAVINGS', label: 'Savings' },
+                  ]}
+                  value={newType}
+                  onChange={(id) => setNewType(id as 'CHECKING' | 'SAVINGS')}
+                />
                 <div>
                   <Label htmlFor="new-nickname" className="mb-2 inline-block font-medium">
                     Nickname
@@ -309,22 +316,17 @@ export function AccountsPage() {
                 <Modal.Heading>Request a credit card</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="flex flex-col gap-4">
-                <div>
-                  <Label htmlFor="card-brand" className="mb-2 block font-medium">
-                    Brand
-                  </Label>
-                  <select
-                    id="card-brand"
-                    value={cardBrand}
-                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                      setCardBrand(e.target.value as 'VISA' | 'MASTERCARD')
-                    }
-                    className={selectFull}
-                  >
-                    <option value="VISA">Visa</option>
-                    <option value="MASTERCARD">Mastercard</option>
-                  </select>
-                </div>
+                <AppSelect
+                  label="Brand"
+                  aria-label="Card brand"
+                  placeholder="Select brand"
+                  options={[
+                    { id: 'VISA', label: 'Visa' },
+                    { id: 'MASTERCARD', label: 'Mastercard' },
+                  ]}
+                  value={cardBrand}
+                  onChange={(id) => setCardBrand(id as 'VISA' | 'MASTERCARD')}
+                />
                 <div>
                   <Label htmlFor="card-nick-open" className="mb-2 inline-block font-medium">
                     Card nickname (optional)
@@ -365,25 +367,14 @@ export function AccountsPage() {
                       Transfer <strong>{(closingRow.balanceCents / 100).toFixed(2)}</strong> to another open account,
                       then we&apos;ll close this one.
                     </p>
-                    <div>
-                      <Label htmlFor="recv-funds" className="mb-2 block font-medium">
-                        Receive funds
-                      </Label>
-                      <select
-                        id="recv-funds"
-                        required
-                        value={transferTo}
-                        onChange={(e: ChangeEvent<HTMLSelectElement>) => setTransferTo(e.target.value)}
-                        className={selectFull}
-                      >
-                        <option value="">Select account…</option>
-                        {destinations.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.nickname}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <AccountSelect
+                      label="Receive funds"
+                      aria-label="Account to receive closing balance"
+                      placeholder="Select account…"
+                      options={destinationSelectOptions}
+                      value={transferTo}
+                      onChange={setTransferTo}
+                    />
                   </div>
                 ) : (
                   <p className="text-sm text-neutral-700">This account has a $0 balance and can be closed.</p>
