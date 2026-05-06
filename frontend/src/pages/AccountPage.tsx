@@ -1,23 +1,13 @@
-import {
-  Button,
-  Paper,
-  Skeleton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, Input, Label, Skeleton } from '@heroui/react';
+import type { ChangeEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { api, delay, formatUsd } from '../api/client';
 import { usePrivacy } from '../privacy/PrivacyProvider';
+
+const inputRow =
+  'bg-field text-field mt-2 w-full min-w-[140px] cursor-pointer rounded-xl border px-4 py-2 outline-none transition-[border,color,background] focus-visible:border-accent focus-visible:ring-[2px] focus-visible:ring-focus sm:w-auto';
 
 export function AccountPage() {
   const { id } = useParams();
@@ -80,70 +70,74 @@ export function AccountPage() {
   });
 
   const total = txs.data?.total ?? 0;
+  const totalPages = txs.data?.totalPages ?? Math.max(1, Math.ceil(total / pageSize));
   const loading = txs.isFetching || acc.isFetching;
   const ready = !loading && txs.data !== undefined && acc.data !== undefined;
 
   return (
-    <Stack spacing={2}>
+    <div className="flex flex-col gap-6">
       <div>
-        <Typography variant="h4" fontWeight={800}>
-          {acc.data?.nickname ?? (acc.isFetching ? <Skeleton width={180} /> : 'Account')}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {acc.data?.mask}
-        </Typography>
+        <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">
+          {acc.data?.nickname ?? (acc.isFetching ? <Skeleton className="inline-block h-9 w-44 rounded-md" /> : 'Account')}
+        </h1>
+        <p className="text-sm font-medium text-neutral-600">{acc.data?.mask}</p>
         {acc.data ? (
-          <Typography variant="subtitle2" sx={{ mt: 1 }}>
+          <p className="mt-2 text-base font-semibold text-neutral-800">
             Balance: {formatMoney(acc.data.balanceCents)}
-          </Typography>
+          </p>
         ) : null}
       </div>
 
-      <Paper sx={{ p: 2, borderRadius: 3 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} flexWrap="wrap" alignItems="flex-end">
-          <TextField
-            label="Search description"
-            size="small"
-            value={qDraft}
-            onChange={(e) => setQDraft(e.target.value)}
-            sx={{ minWidth: 220 }}
-          />
-          <TextField
-            label="From (UTC date)"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={from}
-            onChange={(e) => {
-              setFrom(e.target.value);
-              setPage(1);
-            }}
-            sx={{ width: 160 }}
-          />
-          <TextField
-            label="To (UTC date)"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={to}
-            onChange={(e) => {
-              setTo(e.target.value);
-              setPage(1);
-            }}
-            sx={{ width: 160 }}
-          />
-          <Button
-            variant="contained"
-            onClick={() => {
-              setQ(qDraft);
-              setPage(1);
-            }}
-          >
+      <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[200px] flex-1">
+            <Label htmlFor="q-desc" className="mb-2 block font-medium text-neutral-800">
+              Search description
+            </Label>
+            <Input
+              id="q-desc"
+              value={qDraft}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setQDraft(e.target.value)}
+              className="w-full rounded-xl border px-4 py-2 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            />
+          </div>
+          <div className="w-[160px] shrink-0">
+            <Label htmlFor="tx-from" className="mb-2 block font-medium text-neutral-800">
+              From (UTC date)
+            </Label>
+            <input
+              id="tx-from"
+              type="date"
+              value={from}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setFrom(e.target.value);
+                setPage(1);
+              }}
+              className={inputRow}
+            />
+          </div>
+          <div className="w-[160px] shrink-0">
+            <Label htmlFor="tx-to" className="mb-2 block font-medium text-neutral-800">
+              To (UTC date)
+            </Label>
+            <input
+              id="tx-to"
+              type="date"
+              value={to}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setTo(e.target.value);
+                setPage(1);
+              }}
+              className={inputRow}
+            />
+          </div>
+          <Button variant="primary" size="md" onPress={() => { setQ(qDraft); setPage(1); }}>
             Apply filters
           </Button>
           <Button
-            variant="text"
-            onClick={() => {
+            variant="ghost"
+            size="md"
+            onPress={() => {
               setQ('');
               setQDraft('');
               setFrom('');
@@ -153,58 +147,92 @@ export function AccountPage() {
           >
             Clear
           </Button>
-        </Stack>
-      </Paper>
+        </div>
+      </div>
 
-      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
-        <Table size="small" data-testid={ready ? 'transactions-ready' : undefined} aria-busy={loading}>
-          <TableHead sx={{ bgcolor: 'action.hover' }}>
-            <TableRow>
-              <TableCell>When</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell align="right">Amount</TableCell>
-              <TableCell align="right">Balance after</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={4}>
-                      <Skeleton variant="rounded" height={36} animation="wave" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              : (txs.data?.items ?? []).map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>{new Date(r.occurredAt).toLocaleString()}</TableCell>
-                    <TableCell>{r.description}</TableCell>
-                    <TableCell align="right">{formatUsd(r.amountCents)}</TableCell>
-                    <TableCell align="right">{formatMoney(r.balanceAfterCents)}</TableCell>
-                  </TableRow>
-                ))}
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                count={total}
-                page={page - 1}
-                onPageChange={(_, next) => setPage(next + 1)}
-                rowsPerPage={pageSize}
-                onRowsPerPageChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
-                }}
-                rowsPerPageOptions={[10, 15, 25, 50]}
-                colSpan={4}
-              />
-            </TableRow>
-          </TableFooter>
-        </Table>
-      </Paper>
-      <Button component={RouterLink} to="/transfer" variant="text">
+      <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+        <div className="-mx-2 overflow-x-auto sm:mx-0">
+          <table
+            data-testid={ready ? 'transactions-ready' : undefined}
+            aria-busy={loading}
+            className="w-full min-w-[640px] text-sm"
+          >
+            <thead>
+              <tr className="border-b border-neutral-200 bg-neutral-50">
+                <th className="px-3 py-3 text-left font-semibold text-neutral-700">When</th>
+                <th className="px-3 py-3 text-left font-semibold text-neutral-700">Description</th>
+                <th className="px-3 py-3 text-right font-semibold text-neutral-700">Amount</th>
+                <th className="px-3 py-3 text-right font-semibold text-neutral-700">Balance after</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {loading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i}>
+                      <td colSpan={4} className="px-3 py-2">
+                        <Skeleton className="h-9 w-full rounded-lg" />
+                      </td>
+                    </tr>
+                  ))
+                : (txs.data?.items ?? []).map((r) => (
+                    <tr key={r.id}>
+                      <td className="whitespace-nowrap px-3 py-2.5 font-medium text-neutral-800">
+                        {new Date(r.occurredAt).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-2.5 text-neutral-800">{r.description}</td>
+                      <td className="font-variant-numeric px-3 py-2.5 text-right tabular-nums text-neutral-800">
+                        {formatUsd(r.amountCents)}
+                      </td>
+                      <td className="font-variant-numeric px-3 py-2.5 text-right tabular-nums text-neutral-800">
+                        {formatMoney(r.balanceAfterCents)}
+                      </td>
+                    </tr>
+                  ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 px-3 py-3">
+          <span className="text-sm text-neutral-600">
+            {total} transaction{total === 1 ? '' : 's'} · page {page} / {totalPages}
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <label htmlFor="page-size" className="text-sm font-medium text-neutral-700">
+              Rows
+            </label>
+            <select
+              id="page-size"
+              aria-label="Rows per page"
+              className="rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm"
+              value={pageSize}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 15, 25, 50].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <Button variant="outline" size="sm" isDisabled={page <= 1} onPress={() => setPage((p) => Math.max(1, p - 1))}>
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              isDisabled={page >= totalPages}
+              onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <RouterLink to="/transfer" className="text-sm font-semibold text-indigo-600 underline-offset-4 hover:underline">
         Make a transfer
-      </Button>
-    </Stack>
+      </RouterLink>
+    </div>
   );
 }

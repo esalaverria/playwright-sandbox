@@ -1,4 +1,4 @@
-import { Button, Paper, Stack, Typography } from '@mui/material';
+import { Button, Card } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 
@@ -23,26 +23,22 @@ export function MessagesPage() {
   });
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="h4" fontWeight={700}>
-        Secure messages
-      </Typography>
+    <div className="flex flex-col gap-4">
+      <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Secure messages</h1>
       {(list.data ?? []).map((m) => (
-        <Paper key={m.id} sx={{ p: 2, opacity: m.readAt ? 0.7 : 1 }}>
-          <Typography variant="overline" color="text.secondary">
+        <Card.Root key={m.id} className={`p-4 shadow-sm ${m.readAt ? 'opacity-70' : ''}`}>
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
             {new Date(m.createdAt).toLocaleString()} {m.readAt ? '· read' : '· unread'}
-          </Typography>
-          <Typography variant="h6">{m.subject}</Typography>
-          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-            {m.body}
-          </Typography>
+          </p>
+          <h2 className="mt-1 text-lg font-bold text-neutral-900">{m.subject}</h2>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{m.body}</p>
           {!m.readAt ? (
-            <Button sx={{ mt: 1 }} size="small" onClick={() => read.mutate(m.id)}>
+            <Button className="mt-3" size="sm" variant="secondary" onPress={() => read.mutate(m.id)}>
               Mark as read
             </Button>
           ) : null}
-        </Paper>
+        </Card.Root>
       ))}
-    </Stack>
+    </div>
   );
 }

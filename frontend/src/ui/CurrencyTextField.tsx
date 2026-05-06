@@ -1,32 +1,42 @@
-import { InputAdornment, TextField, type TextFieldProps } from '@mui/material';
+import { InputGroup, Label } from '@heroui/react';
+import type { ComponentPropsWithoutRef } from 'react';
 
-type Props = Omit<TextFieldProps, 'onChange'> & {
+type InputProps = Omit<ComponentPropsWithoutRef<'input'>, 'onChange' | 'type' | 'value'>;
+
+type Props = InputProps & {
+  label?: React.ReactNode;
   value: string;
   onChangeValue: (rawDollars: string) => void;
 };
 
 /** Dollar-prefixed amount; value is a plain decimal string like "12.34". */
-export function CurrencyTextField({ value, onChangeValue, InputProps, ...rest }: Props) {
+export function CurrencyTextField({ label, value, onChangeValue, className, id, ...rest }: Props) {
+  const inputId = id ?? 'currency-field';
   return (
-    <TextField
-      {...rest}
-      value={value}
-      onChange={(e) => {
-        let v = e.target.value.replace(/[^0-9.]/g, '');
-        const dot = v.indexOf('.');
-        if (dot !== -1) {
-          v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '').slice(0, 2);
-        }
-        onChangeValue(v);
-      }}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start" sx={{ fontWeight: 700, color: 'secondary.dark' }}>
-            $
-          </InputAdornment>
-        ),
-        ...InputProps,
-      }}
-    />
+    <div className={className}>
+      {label ? (
+        <Label htmlFor={inputId} className="mb-1.5 inline-block font-medium">
+          {label}
+        </Label>
+      ) : null}
+      <InputGroup fullWidth>
+        <InputGroup.Prefix className="pl-3 font-bold text-indigo-700">$</InputGroup.Prefix>
+        <InputGroup.Input
+          id={inputId}
+          aria-label={typeof label === 'string' ? label : undefined}
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => {
+            let v = e.target.value.replace(/[^0-9.]/g, '');
+            const dot = v.indexOf('.');
+            if (dot !== -1) {
+              v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '').slice(0, 2);
+            }
+            onChangeValue(v);
+          }}
+          {...rest}
+        />
+      </InputGroup>
+    </div>
   );
 }

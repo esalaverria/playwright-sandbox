@@ -1,4 +1,4 @@
-import { Chip, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Chip } from '@heroui/react';
 import { useQuery } from '@tanstack/react-query';
 import { api, delay } from '../api/client';
 
@@ -45,48 +45,47 @@ export function ActivityPage() {
   });
 
   return (
-    <Stack spacing={2}>
+    <div className="flex flex-col gap-5">
       <div>
-        <Typography variant="h4" fontWeight={800}>
-          Account activity
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">Account activity</h1>
+        <p className="mt-2 text-sm font-medium text-neutral-600">
           Security and banking actions on your profile (not transaction ledger).
-        </Typography>
+        </p>
       </div>
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          overflow: 'hidden',
-          p: { xs: 1.5, sm: 2 },
-        }}
-      >
-        <Table size="small" data-testid={!isFetching && data !== undefined ? 'activity-ready' : undefined}>
-          <TableHead sx={{ bgcolor: 'action.hover' }}>
-            <TableRow>
-              <TableCell sx={{ py: 1.5 }}>When</TableCell>
-              <TableCell sx={{ py: 1.5 }}>Action</TableCell>
-              <TableCell sx={{ py: 1.5 }}>Details</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(data ?? []).map((row) => (
-              <TableRow key={row.id} hover>
-                <TableCell sx={{ py: 1.5, verticalAlign: 'top' }}>{new Date(row.createdAt).toLocaleString()}</TableCell>
-                <TableCell sx={{ py: 1.5, verticalAlign: 'top' }}>
-                  <Chip size="small" label={LABELS[row.action] ?? row.action} color="primary" variant="outlined" />
-                </TableCell>
-                <TableCell sx={{ py: 1.5, verticalAlign: 'top', fontSize: 13, color: 'text.secondary', maxWidth: 480 }}>
-                  {humanMeta(row.meta)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
-    </Stack>
+
+      <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <div className="-mx-2 overflow-x-auto sm:mx-0">
+          <table
+            data-testid={!isFetching && data !== undefined ? 'activity-ready' : undefined}
+            className="w-full min-w-[560px] text-sm"
+          >
+            <thead>
+              <tr className="border-b border-neutral-200 bg-neutral-50">
+                <th className="rounded-tl-lg px-3 py-3 text-left font-semibold text-neutral-700">When</th>
+                <th className="px-3 py-3 text-left font-semibold text-neutral-700">Action</th>
+                <th className="rounded-tr-lg px-3 py-3 text-left font-semibold text-neutral-700">Details</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {(data ?? []).map((row) => (
+                <tr key={row.id} className="hover:bg-neutral-50/90">
+                  <td className="align-top whitespace-nowrap px-3 py-3 text-neutral-800">
+                    {new Date(row.createdAt).toLocaleString()}
+                  </td>
+                  <td className="align-top px-3 py-3">
+                    <Chip variant="secondary" color="accent" size="sm">
+                      {LABELS[row.action] ?? row.action}
+                    </Chip>
+                  </td>
+                  <td className="align-top px-3 py-3 text-[13px] font-medium leading-relaxed text-neutral-600 md:max-w-xl">
+                    {humanMeta(row.meta)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }

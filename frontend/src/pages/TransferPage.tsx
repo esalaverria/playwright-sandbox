@@ -1,13 +1,4 @@
-import {
-  Box,
-  Button,
-  MenuItem,
-  Stack,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, Input, Label, Tabs, TextField } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
@@ -17,11 +8,13 @@ import { CurrencyTextField } from '../ui/CurrencyTextField';
 
 type Account = { id: string; nickname: string; mask: string; type: string; balanceCents: number };
 
+type TabKey = 'internal' | 'peer';
+
 export function TransferPage() {
   const qc = useQueryClient();
   const toast = useToast();
   const { formatMoney } = usePrivacy();
-  const [tab, setTab] = useState(0);
+  const [kind, setKind] = useState<TabKey>('internal');
   const [intAmount, setIntAmount] = useState('');
   const [peerAmount, setPeerAmount] = useState('');
 
@@ -36,8 +29,12 @@ export function TransferPage() {
   const fromAccounts = (accounts ?? []).filter((a) => a.type === 'CHECKING' || a.type === 'SAVINGS');
 
   const internal = useMutation({
-    mutationFn: async (payload: { fromAccountId: string; toAccountId: string; amountCents: number; memo?: string }) =>
-      api.post('/transfers/internal', payload),
+    mutationFn: async (payload: {
+      fromAccountId: string;
+      toAccountId: string;
+      amountCents: number;
+      memo?: string;
+    }) => api.post('/transfers/internal', payload),
     onSuccess: async () => {
       toast('Transfer posted!');
       setIntAmount('');
@@ -72,10 +69,10 @@ export function TransferPage() {
   const preview = useQuery({
     queryKey: ['preview', peerEmail],
     queryFn: async () => {
-      const { data } = await api.get<{ userExists: boolean; accounts: { id: string; mask: string; type: string; nickname: string }[] }>(
-        '/recipients/preview',
-        { params: { email: peerEmail } },
-      );
+      const { data } = await api.get<{
+        userExists: boolean;
+        accounts: { id: string; mask: string; type: string; nickname: string }[];
+      }>('/recipients/preview', { params: { email: peerEmail } });
       return data;
     },
     enabled: peerEmail.includes('@'),
@@ -89,130 +86,160 @@ export function TransferPage() {
     setPeerTo((cur) => (peerAccounts.some((a) => a.id === cur) ? cur : peerAccounts[0]!.id));
   }, [peerAccounts]);
 
-  return (
-    <Stack spacing={3}>
-      <Typography variant="h4" fontWeight={800}>
-        Transfer
-      </Typography>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-        <Tab label="Between my accounts" data-transfer-kind="internal" />
-        <Tab label="Send to someone" data-transfer-kind="peer" />
-      </Tabs>
-      <Typography variant="body2" color="text.secondary" maxWidth={560}>
-        Transfers can only come from checking or savings. Credit cards are for payments (Pay card, Bill pay), not moving money to yourself or others.
-      </Typography>
+  const inputSelect =
+    'bg-field text-field mt-2 w-full cursor-pointer rounded-xl border px-4 py-2.5 outline-none transition-[border,color,background] focus-visible:border-accent focus-visible:ring-[2px] focus-visible:ring-focus';
 
-      {tab === 0 ? (
-        <Box
-          component="form"
-          data-transfer-kind="internal"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const fd = new FormData(e.currentTarget);
-            const amt = Number(intAmount);
-            internal.mutate({
-              fromAccountId: String(fd.get('from')),
-              toAccountId: String(fd.get('to')),
-              amountCents: Math.round(amt * 100),
-              memo: String(fd.get('memo') ?? '') || undefined,
-            });
-          }}
-        >
-          <Stack spacing={2} maxWidth={480}>
-            <TextField select name="from" label="From" required defaultValue="">
-              <MenuItem value="" disabled>
-                Select account
-              </MenuItem>
-              {fromAccounts.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nickname} ({formatMoney(a.balanceCents)})
-                </MenuItem>
-              ))}
+  return (
+    <div className="flex max-w-xl flex-col gap-6">
+      <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">Transfer</h1>
+
+      <p className="text-muted text-sm leading-relaxed">
+        Transfers can only come from checking or savings. Credit cards are for payments (Pay card, Bill pay), not
+        moving money to yourself or others.
+      </p>
+
+      <Tabs.Root
+        selectedKey={kind}
+        onSelectionChange={(k) => setKind(k as TabKey)}
+        aria-label="Transfer type"
+        className="w-full max-w-xl"
+      >
+        <Tabs.ListContainer className="border-b border-neutral-300">
+          <Tabs.List className="relative flex gap-1">
+            <Tabs.Tab id="internal" className="cursor-pointer pb-3 pr-6 text-base font-semibold">
+              Between my accounts
+            </Tabs.Tab>
+            <Tabs.Tab id="peer" className="cursor-pointer pb-3 pr-6 text-base font-semibold">
+              Send to someone
+            </Tabs.Tab>
+            <Tabs.Indicator className="bg-primary h-1 rounded-full data-[selected]:bg-indigo-700" />
+          </Tabs.List>
+        </Tabs.ListContainer>
+
+        <Tabs.Panel id="internal" className="pt-8 outline-none [&:focus-visible]:ring-2 [&:focus-visible]:ring-transparent">
+          <form
+            data-transfer-kind="internal"
+            className="flex flex-col gap-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              const amt = Number(intAmount);
+              internal.mutate({
+                fromAccountId: String(fd.get('from')),
+                toAccountId: String(fd.get('to')),
+                amountCents: Math.round(amt * 100),
+                memo: String(fd.get('memo') ?? '') || undefined,
+              });
+            }}
+          >
+            <div>
+              <Label htmlFor="int-from">From</Label>
+              <select id="int-from" name="from" required aria-label="From" className={inputSelect} defaultValue="">
+                <option value="" disabled>
+                  Select account
+                </option>
+                {fromAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nickname} ({formatMoney(a.balanceCents)})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="int-to">To</Label>
+              <select id="int-to" name="to" required aria-label="To" className={inputSelect} defaultValue="">
+                <option value="" disabled>
+                  Select account
+                </option>
+                {(accounts ?? []).map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nickname}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <CurrencyTextField label="Amount (USD)" value={intAmount} onChangeValue={setIntAmount} required />
+            <TextField name="memo">
+              <Label className="mb-2">Memo</Label>
+              <Input />
             </TextField>
-            <TextField select name="to" label="To" required defaultValue="">
-              <MenuItem value="" disabled>
-                Select account
-              </MenuItem>
-              {(accounts ?? []).map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nickname}
-                </MenuItem>
-              ))}
-            </TextField>
-            <CurrencyTextField
-              name="amount"
-              label="Amount"
-              value={intAmount}
-              onChangeValue={setIntAmount}
-              required
-              inputProps={{ min: 0 }}
-            />
-            <TextField name="memo" label="Memo" />
-            <Button type="submit" variant="contained" disabled={internal.isPending}>
+            <Button type="submit" variant="primary" fullWidth size="lg" isDisabled={internal.isPending}>
               Submit internal transfer
             </Button>
-          </Stack>
-        </Box>
-      ) : (
-        <Box
-          component="form"
-          data-transfer-kind="peer"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const fd = new FormData(e.currentTarget);
-            const amt = Number(peerAmount);
-            peer.mutate({
-              fromAccountId: String(fd.get('from')),
-              recipientEmail: peerEmail.trim(),
-              toAccountId: peerTo,
-              amountCents: Math.round(amt * 100),
-              memo: String(fd.get('memo') ?? '') || undefined,
-            });
-          }}
-        >
-          <Stack spacing={2} maxWidth={480}>
-            <TextField
-              label="Recipient email"
-              value={peerEmail}
-              onChange={(e) => setPeerEmail(e.target.value)}
-              required
-            />
-            <TextField select name="from" label="From your account" required defaultValue="">
-              <MenuItem value="" disabled>
-                Select account
-              </MenuItem>
-              {fromAccounts.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nickname} ({formatMoney(a.balanceCents)})
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField select label="To their account" value={peerTo} onChange={(e) => setPeerTo(e.target.value)} required>
-              {peerAccounts.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nickname} {a.mask} · {a.type}
-                </MenuItem>
-              ))}
-            </TextField>
+          </form>
+        </Tabs.Panel>
+
+        <Tabs.Panel id="peer" className="pt-8 outline-none [&:focus-visible]:ring-2 [&:focus-visible]:ring-transparent">
+          <form
+            data-transfer-kind="peer"
+            className="flex flex-col gap-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              const amt = Number(peerAmount);
+              peer.mutate({
+                fromAccountId: String(fd.get('from')),
+                recipientEmail: peerEmail.trim(),
+                toAccountId: peerTo,
+                amountCents: Math.round(amt * 100),
+                memo: String(fd.get('memo') ?? '') || undefined,
+              });
+            }}
+          >
+            <div>
+              <Label htmlFor="peer-email">Recipient email</Label>
+              <Input
+                id="peer-email"
+                value={peerEmail}
+                onChange={(e) => setPeerEmail(e.target.value)}
+                required
+                className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+              />
+            </div>
+            <div>
+              <Label htmlFor="peer-from">From your account</Label>
+              <select id="peer-from" name="from" required aria-label="From your account" className={inputSelect} defaultValue="">
+                <option value="" disabled>
+                  Select account
+                </option>
+                {fromAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nickname} ({formatMoney(a.balanceCents)})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="peer-to">To their account</Label>
+              <select
+                id="peer-to"
+                aria-label="To their account"
+                value={peerTo}
+                required
+                onChange={(e) => setPeerTo(e.target.value)}
+                className={inputSelect}
+              >
+                {peerAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nickname} {a.mask} · {a.type}
+                  </option>
+                ))}
+              </select>
+            </div>
             {!preview.data?.userExists ? (
-              <Typography variant="caption" color="text.secondary">
-                Enter an email that belongs to another NorthPeak user.
-              </Typography>
+              <p className="text-muted text-xs leading-relaxed">Enter an email that belongs to another NorthPeak user.</p>
             ) : null}
-            <CurrencyTextField
-              label="Amount"
-              value={peerAmount}
-              onChangeValue={setPeerAmount}
-              required
-              inputProps={{ min: 0 }}
-            />
-            <TextField name="memo" label="Memo" />
-            <Button type="submit" variant="contained" disabled={peer.isPending || !peerTo}>
+            <CurrencyTextField label="Amount (USD)" value={peerAmount} onChangeValue={setPeerAmount} required />
+            <TextField name="memo">
+              <Label className="mb-2">Memo</Label>
+              <Input />
+            </TextField>
+            <Button type="submit" variant="primary" fullWidth size="lg" isDisabled={peer.isPending || !peerTo}>
               Send money
             </Button>
-          </Stack>
-        </Box>
-      )}
-    </Stack>
+          </form>
+        </Tabs.Panel>
+      </Tabs.Root>
+    </div>
   );
 }

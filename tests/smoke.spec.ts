@@ -63,7 +63,7 @@ test.describe('NorthPeak smoke', { tag: '@smoke' }, () => {
       await page.getByRole('option', { name: /River checking/i }).click();
       await internalForm.getByRole('combobox', { name: 'To' }).click();
       await page.getByRole('option', { name: /Growth savings/i }).click();
-      await internalForm.getByLabel('Amount (USD)').fill('10.00');
+      await internalForm.getByRole('textbox', { name: /amount/i }).fill('10.00');
       await internalForm.getByRole('button', { name: /submit internal transfer/i }).click();
       await expect(page.getByRole('alert').filter({ hasText: /transfer posted/i })).toBeVisible();
     });
@@ -90,7 +90,7 @@ test.describe('NorthPeak smoke', { tag: '@smoke' }, () => {
       await page.getByRole('option', { name: /River checking/i }).click();
 
       await expect(page.getByLabel(/To their account/)).toBeEnabled();
-      await page.getByLabel(/Amount \(USD\)/).fill('1.00');
+      await page.locator('form[data-transfer-kind="peer"]').getByRole('textbox', { name: /amount/i }).fill('1.00');
       await page.getByRole('button', { name: /send money/i }).click();
       await expect(page.getByRole('alert').filter({ hasText: /^sent/i })).toBeVisible();
 

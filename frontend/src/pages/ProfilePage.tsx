@@ -1,4 +1,5 @@
-import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Button, Input, Label, TextField } from '@heroui/react';
+import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 
@@ -25,16 +26,13 @@ export function ProfilePage() {
   });
 
   return (
-    <Stack spacing={3}>
-      <Typography variant="h4" fontWeight={700}>
-        Profile & security
-      </Typography>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Contact
-        </Typography>
-        <Box component="form"
-          onSubmit={(e) => {
+    <div className="flex flex-col gap-8">
+      <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Profile & security</h1>
+      <div className="max-w-xl rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-neutral-900">Contact</h2>
+        <form
+          className="mt-4 flex max-w-md flex-col gap-4"
+          onSubmit={(e: FormEvent<HTMLFormElement>) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
             patch.mutate({
@@ -43,24 +41,33 @@ export function ProfilePage() {
             });
           }}
         >
-          <Stack spacing={2} maxWidth={480}>
-            <TextField name="fullName" label="Full name" required defaultValue={me.data?.fullName} />
-            <TextField name="phone" label="Phone" defaultValue={me.data?.phone ?? ''} />
-            <TextField label="Email" value={me.data?.email ?? ''} disabled fullWidth />
-            <Button type="submit" variant="contained" disabled={patch.isPending}>
-              Save
-            </Button>
-            {patch.isSuccess ? <Alert severity="success">Saved.</Alert> : null}
-          </Stack>
-        </Box>
-      </Paper>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Change password
-        </Typography>
-        <Box
-          component="form"
-          onSubmit={(e) => {
+          <TextField name="fullName" isRequired defaultValue={me.data?.fullName}>
+            <Label className="mb-2">Full name</Label>
+            <Input />
+          </TextField>
+          <TextField name="phone" defaultValue={me.data?.phone ?? ''}>
+            <Label className="mb-2">Phone</Label>
+            <Input />
+          </TextField>
+          <div>
+            <Label className="mb-2 inline-block font-medium">Email</Label>
+            <Input value={me.data?.email ?? ''} readOnly className="mt-0 w-full rounded-xl border px-4 py-2.5 opacity-80" />
+          </div>
+          <Button type="submit" variant="primary" isDisabled={patch.isPending}>
+            Save
+          </Button>
+          {patch.isSuccess ? (
+            <Alert.Root status="success" role="alert">
+              <Alert.Title>Saved.</Alert.Title>
+            </Alert.Root>
+          ) : null}
+        </form>
+      </div>
+      <div className="max-w-xl rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-neutral-900">Change password</h2>
+        <form
+          className="mt-4 flex max-w-md flex-col gap-4"
+          onSubmit={(e: FormEvent<HTMLFormElement>) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
             pwd.mutate({
@@ -69,16 +76,24 @@ export function ProfilePage() {
             });
           }}
         >
-          <Stack spacing={2} maxWidth={480}>
-            <TextField name="currentPassword" type="password" label="Current password" required />
-            <TextField name="newPassword" type="password" label="New password (min 8)" required />
-            <Button type="submit" variant="outlined" disabled={pwd.isPending}>
-              Update password
-            </Button>
-            {pwd.isSuccess ? <Alert severity="success">Password updated.</Alert> : null}
-          </Stack>
-        </Box>
-      </Paper>
-    </Stack>
+          <TextField name="currentPassword" type="password" isRequired>
+            <Label className="mb-2">Current password</Label>
+            <Input />
+          </TextField>
+          <TextField name="newPassword" type="password" isRequired minLength={8}>
+            <Label className="mb-2">New password (min 8)</Label>
+            <Input />
+          </TextField>
+          <Button type="submit" variant="outline" isDisabled={pwd.isPending}>
+            Update password
+          </Button>
+          {pwd.isSuccess ? (
+            <Alert.Root status="success" role="alert">
+              <Alert.Title>Password updated.</Alert.Title>
+            </Alert.Root>
+          ) : null}
+        </form>
+      </div>
+    </div>
   );
 }

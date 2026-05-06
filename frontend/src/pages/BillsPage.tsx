@@ -1,24 +1,5 @@
-import {
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  MenuItem,
-  Paper,
-  Stack,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tabs,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import { Button, Chip, Input, Label, Modal, Tabs, useOverlayState } from '@heroui/react';
+import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '../api/client';
@@ -39,6 +20,8 @@ type BillRow = {
   fromAccountNickname: string;
 };
 
+type BillTab = 'schedule' | 'paynow';
+
 function apiErrorMessage(err: unknown, fallback: string): string {
   const e = err as { response?: { data?: { message?: string | string[]; code?: string } } };
   const m = e.response?.data?.message;
@@ -47,13 +30,23 @@ function apiErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
+const selectClass =
+  'bg-field text-field mt-2 w-full max-w-md cursor-pointer rounded-xl border px-4 py-2.5 outline-none transition-[border,color,background] focus-visible:border-accent focus-visible:ring-[2px] focus-visible:ring-focus';
+
 export function BillsPage() {
   const qc = useQueryClient();
   const toast = useToast();
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState<BillTab>('schedule');
   const [billAmount, setBillAmount] = useState('');
   const [payNowAmount, setPayNowAmount] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
+
+  const editModal = useOverlayState({
+    isOpen: editId !== null,
+    onOpenChange: (open: boolean) => {
+      if (!open) setEditId(null);
+    },
+  });
 
   const accounts = useQuery({
     queryKey: ['accounts'],
@@ -122,221 +115,334 @@ export function BillsPage() {
   });
 
   return (
-    <Stack spacing={3}>
-      <Typography variant="h4" fontWeight={700}>
-        Bill pay
-      </Typography>
+    <div className="flex flex-col gap-8">
+      <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Bill pay</h1>
 
-      <Paper sx={{ p: 2 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-          <Tab label="Schedule payment" />
-          <Tab label="Pay now" />
-        </Tabs>
+      <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
+        <Tabs.Root
+          selectedKey={tab}
+          onSelectionChange={(k) => setTab(k as BillTab)}
+          aria-label="Bill payment mode"
+          className="w-full max-w-xl"
+        >
+          <Tabs.ListContainer className="border-b border-neutral-200">
+            <Tabs.List className="relative flex gap-1">
+              <Tabs.Tab id="schedule" className="cursor-pointer pb-3 pr-6 text-base font-semibold">
+                Schedule payment
+              </Tabs.Tab>
+              <Tabs.Tab id="paynow" className="cursor-pointer pb-3 pr-6 text-base font-semibold">
+                Pay now
+              </Tabs.Tab>
+              <Tabs.Indicator className="bg-primary h-1 rounded-full" />
+            </Tabs.List>
+          </Tabs.ListContainer>
 
-        {tab === 0 ? (
-          <Stack
-            component="form"
-            spacing={2}
-            maxWidth={520}
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              create.mutate({
-                billerName: String(fd.get('billerName') ?? ''),
-                fromAccountId: String(fd.get('fromAccountId') ?? ''),
-                amountCents: Math.round(Number(billAmount) * 100),
-                dueDate: String(fd.get('dueDate') ?? ''),
-                memo: String(fd.get('memo') ?? '') || undefined,
-                mode: 'schedule',
-              });
-            }}
-          >
-            <TextField name="billerName" label="Biller" required />
-            <TextField select name="fromAccountId" label="Pay from" required defaultValue="">
-              <MenuItem value="" disabled>
-                Select account
-              </MenuItem>
-              {depositAccounts.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nickname}
-                </MenuItem>
-              ))}
-            </TextField>
-            <CurrencyTextField label="Amount" value={billAmount} onChangeValue={setBillAmount} required inputProps={{ min: 0 }} />
-            <TextField name="dueDate" label="Due date" type="date" InputLabelProps={{ shrink: true }} required />
-            <TextField name="memo" label="Memo" />
-            <Button type="submit" variant="contained">
-              Schedule
-            </Button>
-          </Stack>
-        ) : (
-          <Stack
-            component="form"
-            spacing={2}
-            maxWidth={520}
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              const today = new Date();
-              const iso = today.toISOString().slice(0, 10);
-              create.mutate({
-                billerName: String(fd.get('billerName') ?? ''),
-                fromAccountId: String(fd.get('fromAccountId') ?? ''),
-                amountCents: Math.round(Number(payNowAmount) * 100),
-                dueDate: iso,
-                memo: String(fd.get('memo') ?? '') || undefined,
-                mode: 'pay_now',
-              });
-            }}
-          >
-            <TextField name="billerName" label="Biller" required />
-            <TextField select name="fromAccountId" label="Pay from" required defaultValue="">
-              <MenuItem value="" disabled>
-                Select account
-              </MenuItem>
-              {depositAccounts.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nickname}
-                </MenuItem>
-              ))}
-            </TextField>
-            <CurrencyTextField label="Amount" value={payNowAmount} onChangeValue={setPayNowAmount} required inputProps={{ min: 0 }} />
-            <TextField name="memo" label="Memo" />
-            <Button type="submit" variant="contained">
-              Pay now
-            </Button>
-          </Stack>
-        )}
-      </Paper>
-
-      <Paper sx={{ p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
-        <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
-          Payments
-        </Typography>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Biller</TableCell>
-              <TableCell>Due</TableCell>
-              <TableCell>Pay from</TableCell>
-              <TableCell>Memo</TableCell>
-              <TableCell align="right">Amount</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Source</TableCell>
-              <TableCell align="right" />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(bills.data ?? []).map((b) => (
-              <TableRow
-                key={b.id}
-                sx={(t) => ({
-                  bgcolor:
-                    b.payFromInvalid && b.status === 'SCHEDULED'
-                      ? alpha(t.palette.error.main, t.palette.mode === 'light' ? 0.08 : 0.15)
-                      : undefined,
-                })}
-              >
-                <TableCell>{b.billerName}</TableCell>
-                <TableCell>{new Date(b.dueDate).toLocaleDateString()}</TableCell>
-                <TableCell>{b.fromAccountNickname}</TableCell>
-                <TableCell sx={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.memo ?? '—'}</TableCell>
-                <TableCell align="right">{(b.amountCents / 100).toFixed(2)}</TableCell>
-                <TableCell>{b.kind === 'INSTANT' ? 'Instant' : 'Scheduled'}</TableCell>
-                <TableCell>{b.status}</TableCell>
-                <TableCell>
-                  {b.payFromInvalid && b.status === 'SCHEDULED' ? (
-                    <Chip size="small" color="error" label="Update required" />
-                  ) : (
-                    <Chip size="small" variant="outlined" label="OK" />
-                  )}
-                </TableCell>
-                <TableCell align="right">
-                  <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
-                    {b.status === 'SCHEDULED' ? (
-                      <>
-                        <Button size="small" variant="outlined" onClick={() => setEditId(b.id)}>
-                          Edit
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          disabled={payNow.isPending || b.payFromInvalid}
-                          onClick={() => payNow.mutate(b.id)}
-                        >
-                          Pay now
-                        </Button>
-                      </>
-                    ) : null}
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
-
-      <Dialog open={!!editing} onClose={() => setEditId(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit scheduled payment</DialogTitle>
-        <DialogContent>
-          {editing ? (
-            <Stack
-              spacing={2}
-              sx={{ mt: 1 }}
-              component="form"
-              id="edit-bill-form"
-              onSubmit={(e) => {
+          <Tabs.Panel id="schedule" className="pt-6">
+            <form
+              className="flex max-w-lg flex-col gap-4"
+              onSubmit={(e: FormEvent<HTMLFormElement>) => {
                 e.preventDefault();
                 const fd = new FormData(e.currentTarget);
-                const memoRaw = String(fd.get('memo') ?? '').trim();
-                patchBill.mutate({
-                  id: editing.id,
+                create.mutate({
                   billerName: String(fd.get('billerName') ?? ''),
                   fromAccountId: String(fd.get('fromAccountId') ?? ''),
-                  amountCents: Math.round(Number(fd.get('amount') ?? 0) * 100),
+                  amountCents: Math.round(Number(billAmount) * 100),
                   dueDate: String(fd.get('dueDate') ?? ''),
-                  memo: memoRaw.length ? memoRaw : '',
+                  memo: String(fd.get('memo') ?? '') || undefined,
+                  mode: 'schedule',
                 });
               }}
             >
-              <TextField name="billerName" label="Biller" required defaultValue={editing.billerName} fullWidth />
-              <TextField select name="fromAccountId" label="Pay from" required defaultValue={editing.fromAccountId} fullWidth>
-                {depositAccounts.map((a) => (
-                  <MenuItem key={a.id} value={a.id}>
-                    {a.nickname}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                name="amount"
-                label="Amount"
-                type="number"
-                required
-                fullWidth
-                inputProps={{ min: 0, step: 0.01 }}
-                defaultValue={(editing.amountCents / 100).toFixed(2)}
-              />
-              <TextField
-                name="dueDate"
-                label="Due date"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                required
-                fullWidth
-                defaultValue={editing.dueDate.slice(0, 10)}
-              />
-              <TextField name="memo" label="Memo" fullWidth defaultValue={editing.memo ?? ''} />
-            </Stack>
-          ) : null}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditId(null)}>Cancel</Button>
-          <Button type="submit" form="edit-bill-form" variant="contained" disabled={patchBill.isPending}>
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+              <TextLike name="billerName" label="Biller" required />
+              <div>
+                <Label htmlFor="bill-from-sched" className="font-medium">
+                  Pay from
+                </Label>
+                <select name="fromAccountId" id="bill-from-sched" required className={selectClass} defaultValue="">
+                  <option value="" disabled>
+                    Select account
+                  </option>
+                  {depositAccounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nickname}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <CurrencyTextField label="Amount" value={billAmount} onChangeValue={setBillAmount} required />
+              <div>
+                <Label htmlFor="due-date" className="font-medium">
+                  Due date
+                </Label>
+                <Input id="due-date" type="date" name="dueDate" required className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none" />
+              </div>
+              <InputLike name="memo" label="Memo" />
+              <Button type="submit" variant="primary">
+                Schedule
+              </Button>
+            </form>
+          </Tabs.Panel>
+
+          <Tabs.Panel id="paynow" className="pt-6">
+            <form
+              className="flex max-w-lg flex-col gap-4"
+              onSubmit={(e: FormEvent<HTMLFormElement>) => {
+                e.preventDefault();
+                const fd = new FormData(e.currentTarget);
+                const today = new Date();
+                const iso = today.toISOString().slice(0, 10);
+                create.mutate({
+                  billerName: String(fd.get('pn_billerName') ?? ''),
+                  fromAccountId: String(fd.get('pn_fromAccountId') ?? ''),
+                  amountCents: Math.round(Number(payNowAmount) * 100),
+                  dueDate: iso,
+                  memo: String(fd.get('pn_memo') ?? '') || undefined,
+                  mode: 'pay_now',
+                });
+              }}
+            >
+              <TextLike idSuffix="pay" name="pn_billerName" label="Biller" required />
+              <div>
+                <Label htmlFor="bill-from-now" className="font-medium">
+                  Pay from
+                </Label>
+                <select name="pn_fromAccountId" id="bill-from-now" required className={selectClass} defaultValue="">
+                  <option value="" disabled>
+                    Select account
+                  </option>
+                  {depositAccounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nickname}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <CurrencyTextField label="Amount" value={payNowAmount} onChangeValue={setPayNowAmount} required />
+              <InputLike idSuffix="pay" name="pn_memo" label="Memo" />
+              <Button type="submit" variant="primary">
+                Pay now
+              </Button>
+            </form>
+          </Tabs.Panel>
+        </Tabs.Root>
+      </div>
+
+      <div className="rounded-xl border border-neutral-200 bg-white p-2 shadow-sm sm:p-4">
+        <h2 className="mb-3 px-1 text-base font-bold text-neutral-900">Payments</h2>
+        <div className="-mx-2 overflow-x-auto sm:mx-0">
+          <table className="w-full min-w-[960px] text-sm">
+            <thead>
+              <tr className="border-b border-neutral-200 bg-neutral-50">
+                <th className="px-2 py-2 text-left font-semibold text-neutral-700">Biller</th>
+                <th className="px-2 py-2 text-left font-semibold text-neutral-700">Due</th>
+                <th className="px-2 py-2 text-left font-semibold text-neutral-700">Pay from</th>
+                <th className="px-2 py-2 text-left font-semibold text-neutral-700">Memo</th>
+                <th className="px-2 py-2 text-right font-semibold text-neutral-700">Amount</th>
+                <th className="px-2 py-2 text-left font-semibold text-neutral-700">Type</th>
+                <th className="px-2 py-2 text-left font-semibold text-neutral-700">Status</th>
+                <th className="px-2 py-2 text-left font-semibold text-neutral-700">Source</th>
+                <th className="px-2 py-2 text-right font-semibold text-neutral-700" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {(bills.data ?? []).map((b) => (
+                <tr
+                  key={b.id}
+                  className={
+                    b.payFromInvalid && b.status === 'SCHEDULED' ? 'bg-red-50/90' : undefined
+                  }
+                >
+                  <td className="px-2 py-2 font-medium text-neutral-900">{b.billerName}</td>
+                  <td className="px-2 py-2 text-neutral-800">{new Date(b.dueDate).toLocaleDateString()}</td>
+                  <td className="px-2 py-2 text-neutral-800">{b.fromAccountNickname}</td>
+                  <td className="max-w-[160px] truncate px-2 py-2 text-neutral-700">{b.memo ?? '—'}</td>
+                  <td className="px-2 py-2 text-right font-variant-numeric tabular-nums text-neutral-800">
+                    {(b.amountCents / 100).toFixed(2)}
+                  </td>
+                  <td className="px-2 py-2 text-neutral-800">{b.kind === 'INSTANT' ? 'Instant' : 'Scheduled'}</td>
+                  <td className="px-2 py-2 text-neutral-800">{b.status}</td>
+                  <td className="px-2 py-2">
+                    {b.payFromInvalid && b.status === 'SCHEDULED' ? (
+                      <Chip color="danger" variant="soft" size="sm">
+                        <Chip.Label>Update required</Chip.Label>
+                      </Chip>
+                    ) : (
+                      <Chip variant="secondary" color="accent" size="sm">
+                        <Chip.Label>OK</Chip.Label>
+                      </Chip>
+                    )}
+                  </td>
+                  <td className="px-2 py-2 text-right">
+                    {b.status === 'SCHEDULED' ? (
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button variant="outline" size="sm" onPress={() => setEditId(b.id)}>
+                          Edit
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          isDisabled={payNow.isPending || b.payFromInvalid}
+                          onPress={() => payNow.mutate(b.id)}
+                        >
+                          Pay now
+                        </Button>
+                      </div>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <Modal state={editModal}>
+        <Modal.Backdrop>
+          <Modal.Container size="md" scroll="inside">
+            <Modal.Dialog>
+              {({ close }) => (
+                <>
+                  <Modal.CloseTrigger aria-label="Close dialog" />
+                  <Modal.Header>
+                    <Modal.Heading>Edit scheduled payment</Modal.Heading>
+                  </Modal.Header>
+                  {editing ? (
+                    <form
+                      id="edit-bill-form"
+                      key={editing.id}
+                      onSubmit={(e: FormEvent<HTMLFormElement>) => {
+                        e.preventDefault();
+                        const fd = new FormData(e.currentTarget);
+                        const memoRaw = String(fd.get('memo') ?? '').trim();
+                        patchBill.mutate({
+                          id: editing.id,
+                          billerName: String(fd.get('billerName') ?? ''),
+                          fromAccountId: String(fd.get('fromAccountId') ?? ''),
+                          amountCents: Math.round(Number(fd.get('amount') ?? 0) * 100),
+                          dueDate: String(fd.get('dueDate') ?? ''),
+                          memo: memoRaw.length ? memoRaw : '',
+                        });
+                      }}
+                    >
+                      <Modal.Body className="flex flex-col gap-4">
+                        <div>
+                          <Label htmlFor="edit-biller" className="font-medium">
+                            Biller
+                          </Label>
+                          <Input
+                            id="edit-biller"
+                            name="billerName"
+                            required
+                            defaultValue={editing.billerName}
+                            className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-from" className="font-medium">
+                            Pay from
+                          </Label>
+                          <select
+                            id="edit-from"
+                            name="fromAccountId"
+                            required
+                            defaultValue={editing.fromAccountId}
+                            className={selectClass}
+                          >
+                            {depositAccounts.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.nickname}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-amt" className="font-medium">
+                            Amount
+                          </Label>
+                          <Input
+                            id="edit-amt"
+                            name="amount"
+                            type="number"
+                            required
+                            min={0}
+                            step={0.01}
+                            defaultValue={(editing.amountCents / 100).toFixed(2)}
+                            className="mt-2 w-full rounded-xl border px-4 py-2.5 font-variant-numeric tabular-nums outline-none"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-due" className="font-medium">
+                            Due date
+                          </Label>
+                          <Input
+                            id="edit-due"
+                            name="dueDate"
+                            type="date"
+                            required
+                            defaultValue={editing.dueDate.slice(0, 10)}
+                            className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-memo" className="font-medium">
+                            Memo
+                          </Label>
+                          <Input
+                            id="edit-memo"
+                            name="memo"
+                            defaultValue={editing.memo ?? ''}
+                            className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+                          />
+                        </div>
+                      </Modal.Body>
+                      <Modal.Footer className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          type="button"
+                          onPress={() => {
+                            close();
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" variant="primary" isDisabled={patchBill.isPending}>
+                          Save
+                        </Button>
+                      </Modal.Footer>
+                    </form>
+                  ) : null}
+                </>
+              )}
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
+    </div>
+  );
+}
+
+function TextLike(props: { idSuffix?: string; name: string; label: string; required?: boolean }) {
+  const { idSuffix = '', name, label, required } = props;
+  const id = `fld-${name}${idSuffix}`;
+  return (
+    <div>
+      <Label htmlFor={id} className="font-medium">
+        {label}
+      </Label>
+      <Input id={id} name={name} required={required} className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none" />
+    </div>
+  );
+}
+
+function InputLike(props: { idSuffix?: string; name: string; label: string }) {
+  const { idSuffix = '', name, label } = props;
+  const id = `fld-${name}${idSuffix}`;
+  return (
+    <div>
+      <Label htmlFor={id} className="font-medium">
+        {label}
+      </Label>
+      <Input id={id} name={name} className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none" />
+    </div>
   );
 }

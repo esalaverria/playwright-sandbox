@@ -3,7 +3,7 @@
 Monorepo layout:
 
 - **`backend/`** — NestJS API, Prisma, PostgreSQL migrations & seed
-- **`frontend/`** — Vite + React + MUI SPA
+- **`frontend/`** — Vite + React SPA with **HeroUI v3**, **Tailwind CSS v4**, and **Recharts** (dashboard)
 - **`docker-compose.yml`** — Postgres (port **5432**), API (**4000**), web/nginx (**3000**)
 - **`tests/`** — Playwright E2E specs and **page objects** (`tests/page-objects/`)
 - **`docs/PRODUCT.md`** — concise **business rules** for anyone writing tests or scenarios (accounts, cards, bill pay, transfers)

@@ -1,14 +1,4 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Link,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Alert, Button, Card, Description, Label, Input, TextField } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Navigate, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { api } from '../api/client';
@@ -53,45 +43,51 @@ export function LoginPage() {
     });
   }
 
+  const errMsg =
+    (login.error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Login failed';
+
   return (
-    <Container maxWidth="sm" sx={{ py: 10 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom fontWeight={700}>
-          Sign in
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Demo users share password <strong>Test123!</strong> — try{' '}
-          <code>alice@example.com</code> / <code>bob@example.com</code>.
-        </Typography>
+    <div className="flex min-h-screen justify-center bg-[#f5f3ff] px-4 py-16">
+      <Card.Root className="max-w-md flex-1 p-8 shadow-lg">
+        <div className="mb-8">
+          <h1 className="text-foreground text-balance text-2xl font-extrabold tracking-tight">Sign in</h1>
+          <Description className="text-muted mt-2 text-sm">
+            Demo users share password <strong className="text-foreground font-semibold">Test123!</strong> — try{' '}
+            <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">alice@example.com</code> /{' '}
+            <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">bob@example.com</code>.
+          </Description>
+        </div>
+
         {login.isError ? (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {(login.error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-              'Login failed'}
-          </Alert>
+          <Alert.Root status="danger" role="alert" className="mb-6">
+            <Alert.Title>Error</Alert.Title>
+            <Alert.Description>{typeof errMsg === 'string' ? errMsg : 'Login failed'}</Alert.Description>
+          </Alert.Root>
         ) : null}
-        <Box component="form" onSubmit={onSubmit}>
-          <Stack spacing={2}>
-            <TextField name="email" label="Email" type="email" required fullWidth autoComplete="username" />
-            <TextField
-              name="password"
-              label="Password"
-              type="password"
-              required
-              fullWidth
-              autoComplete="current-password"
-            />
-            <Button type="submit" variant="contained" size="large" disabled={login.isPending}>
-              {login.isPending ? 'Signing in…' : 'Sign in'}
-            </Button>
-            <Typography variant="body2">
-              No account?{' '}
-              <Link component={RouterLink} to="/register">
-                Create one
-              </Link>
-            </Typography>
-          </Stack>
-        </Box>
-      </Paper>
-    </Container>
+
+        <form onSubmit={onSubmit} className="flex flex-col gap-6">
+          <TextField name="email" type="email" isRequired autoComplete="username">
+            <Label className="mb-2">Email</Label>
+            <Input />
+          </TextField>
+
+          <TextField name="password" type="password" isRequired autoComplete="current-password">
+            <Label className="mb-2">Password</Label>
+            <Input />
+          </TextField>
+
+          <Button type="submit" size="lg" variant="primary" isDisabled={login.isPending} fullWidth className="mt-2">
+            {login.isPending ? 'Signing in…' : 'Sign in'}
+          </Button>
+
+          <p className="text-muted text-center text-sm">
+            No account?{' '}
+            <RouterLink to="/register" className="font-semibold text-indigo-600 underline-offset-4 hover:underline">
+              Create one
+            </RouterLink>
+          </p>
+        </form>
+      </Card.Root>
+    </div>
   );
 }

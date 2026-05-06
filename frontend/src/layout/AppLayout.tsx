@@ -1,49 +1,40 @@
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import PersonIcon from '@mui/icons-material/Person';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import EmailIcon from '@mui/icons-material/Email';
-import LogoutIcon from '@mui/icons-material/Logout';
-import PaymentIcon from '@mui/icons-material/Payment';
-import PeopleIcon from '@mui/icons-material/People';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import type { LucideIcon } from 'lucide-react';
 import {
-  AppBar,
-  Box,
-  Divider,
-  Drawer,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Typography,
-  Badge,
-} from '@mui/material';
+  CreditCard,
+  Eye,
+  EyeOff,
+  LayoutDashboard,
+  LogOut,
+  Mail,
+  Receipt,
+  ReceiptText,
+  Shuffle,
+  Timeline,
+  UserRound,
+  Users,
+  Wallet,
+} from 'lucide-react';
+import { Button } from '@heroui/react';
+import { Badge } from '@heroui/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link as RouterLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { usePrivacy } from '../privacy/PrivacyProvider';
 import { PageBreadcrumbs } from './PageBreadcrumbs';
 
-const drawerWidth = 260;
+const SIDEBAR_W = 260;
 
-const nav = [
-  { to: '/', label: 'Dashboard', icon: <DashboardIcon /> },
-  { to: '/accounts', label: 'Accounts', icon: <AccountBalanceWalletIcon /> },
-  { to: '/activity', label: 'Activity', icon: <TimelineIcon /> },
-  { to: '/transfer', label: 'Transfer', icon: <SwapHorizIcon /> },
-  { to: '/payees', label: 'Payees', icon: <PeopleIcon /> },
-  { to: '/bills', label: 'Bill pay', icon: <PaymentIcon /> },
-  { to: '/statements', label: 'Statements', icon: <ReceiptLongIcon /> },
-  { to: '/messages', label: 'Messages', icon: <EmailIcon /> },
-  { to: '/cards', label: 'Cards', icon: <CreditCardIcon /> },
-  { to: '/profile', label: 'Profile', icon: <PersonIcon /> },
+const nav: { to: string; label: string; icon: LucideIcon }[] = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/accounts', label: 'Accounts', icon: Wallet },
+  { to: '/activity', label: 'Activity', icon: Timeline },
+  { to: '/transfer', label: 'Transfer', icon: Shuffle },
+  { to: '/payees', label: 'Payees', icon: Users },
+  { to: '/bills', label: 'Bill pay', icon: Receipt },
+  { to: '/statements', label: 'Statements', icon: ReceiptText },
+  { to: '/messages', label: 'Messages', icon: Mail },
+  { to: '/cards', label: 'Cards', icon: CreditCard },
+  { to: '/profile', label: 'Profile', icon: UserRound },
 ];
 
 export function AppLayout({
@@ -72,79 +63,102 @@ export function AppLayout({
     navigate('/login');
   }
 
+  function navActive(to: string): boolean {
+    if (to === '/') return location.pathname === '/';
+    if (to === '/accounts') return location.pathname.startsWith('/accounts');
+    return location.pathname.startsWith(to);
+  }
+
+  const navItems = nav.map((item) => {
+    const active = navActive(item.to);
+    const Icon = item.icon;
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+          active ? 'bg-white/15 text-white' : 'text-white/85 hover:bg-white/10 hover:text-white'
+        }`}
+      >
+        <Icon className="h-[18px] w-[18px] shrink-0 opacity-95" aria-hidden />
+        <span className="flex-1 truncate">{item.label}</span>
+        {item.to === '/messages' && unread ? (
+          <span className="inline-flex min-w-6 justify-center rounded-full bg-fuchsia-500 px-1.5 py-0 text-[11px] font-bold text-white">
+            {unread}
+          </span>
+        ) : null}
+      </NavLink>
+    );
+  });
+
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-      <AppBar
-        position="fixed"
-        sx={{
-          zIndex: (t) => t.zIndex.drawer + 1,
-          background: (t) =>
-            `linear-gradient(90deg, ${t.palette.primary.dark} 0%, ${t.palette.secondary.dark} 120%)`,
-        }}
-        elevation={0}
+    <div className="min-h-screen" style={{ backgroundColor: '#f5f3ff' }}>
+      <header className="fixed left-0 right-0 top-0 z-[100] flex h-14 shrink-0 items-center gap-2 border-b border-indigo-900/40 bg-gradient-to-r from-indigo-900 to-purple-900 px-4">
+        <h1 className="flex flex-1 text-lg font-bold tracking-tight text-white">NorthPeak</h1>
+        <Button
+          variant="ghost"
+          className="!text-white hover:!bg-white/10"
+          isIconOnly
+          aria-label="toggle balance privacy"
+          onPress={toggleHideBalances}
+        >
+          {hideBalances ? <EyeOff size={22} strokeWidth={1.75} /> : <Eye size={22} strokeWidth={1.75} />}
+        </Button>
+        <span className="hidden max-w-[200px] truncate text-sm font-medium text-white/90 sm:inline">{user.fullName}</span>
+        <Button
+          variant="ghost"
+          className="!text-white hover:!bg-white/10"
+          isIconOnly
+          aria-label="logout"
+          onPress={() => void logout()}
+        >
+          <LogOut size={22} strokeWidth={1.75} />
+        </Button>
+      </header>
+
+      <div className="scrollbar-none flex gap-1 overflow-x-auto border-b border-neutral-200/80 bg-white/90 px-2 py-2 md:hidden">
+        {nav.map((item) => {
+          const active = navActive(item.to);
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-semibold ${
+                active ? 'bg-indigo-100 text-indigo-900' : 'text-neutral-700'
+              }`}
+            >
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
+              {item.label}
+              {item.to === '/messages' && unread ? (
+                <Badge variant="primary" size="sm" className="min-w-5 justify-center text-[10px]">
+                  {unread}
+                </Badge>
+              ) : null}
+            </NavLink>
+          );
+        })}
+      </div>
+
+      <aside
+        className="fixed bottom-0 left-0 top-14 z-30 hidden w-[260px] flex-col overflow-y-auto border-r border-neutral-800/60 bg-neutral-950/70 px-2 py-4 backdrop-blur-md md:flex"
+        style={{ width: SIDEBAR_W }}
+        aria-label="Sidebar"
       >
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
-            NorthPeak
-          </Typography>
-          <IconButton color="inherit" onClick={toggleHideBalances} aria-label="toggle balance privacy">
-            {hideBalances ? <VisibilityOffIcon /> : <VisibilityIcon />}
-          </IconButton>
-          <Typography variant="body2" sx={{ mr: 2, opacity: 0.9 }}>
-            {user.fullName}
-          </Typography>
-          <IconButton color="inherit" onClick={logout} aria-label="logout">
-            <LogoutIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box', borderRight: 'none' },
-        }}
+        <div className="text-muted px-2 pb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Menu</div>
+        <nav className="flex flex-col gap-0.5">{navItems}</nav>
+        <div className="mt-auto border-t border-white/10 pt-4">
+          <p className="px-3 text-[10px] font-semibold uppercase tracking-wide text-white/45">Signed in as</p>
+          <p className="truncate px-3 pb-1 text-xs text-white/80">{user.email}</p>
+        </div>
+      </aside>
+
+      <main
+        className="min-h-[calc(100vh-3.5rem)] px-5 py-6 md:ml-[260px] md:pt-8"
       >
-        <Toolbar />
-        <Box sx={{ overflow: 'auto', px: 1, pt: 2 }}>
-          <Typography variant="caption" sx={{ px: 2, color: 'text.secondary', letterSpacing: 1 }}>
-            MENU
-          </Typography>
-          <List>
-            {nav.map((item) => (
-              <ListItemButton
-                key={item.to}
-                component={RouterLink}
-                to={item.to}
-                selected={
-                  location.pathname === item.to ||
-                  (item.to !== '/' && item.to !== '/accounts' && location.pathname.startsWith(item.to)) ||
-                  (item.to === '/accounts' && location.pathname.startsWith('/accounts'))
-                }
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.label} />
-                {item.to === '/messages' && unread ? (
-                  <Badge badgeContent={unread} color="secondary" />
-                ) : null}
-              </ListItemButton>
-            ))}
-          </List>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="caption" sx={{ px: 2, color: 'text.secondary' }}>
-            Signed in as
-          </Typography>
-          <Typography variant="body2" sx={{ px: 2, mb: 1 }}>
-            {user.email}
-          </Typography>
-        </Box>
-      </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: `calc(100% - ${drawerWidth}px)` }}>
-        <Toolbar />
         <PageBreadcrumbs />
         {children ?? <Outlet />}
-      </Box>
-    </Box>
+      </main>
+    </div>
   );
 }

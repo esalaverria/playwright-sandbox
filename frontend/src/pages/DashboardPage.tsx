@@ -1,14 +1,6 @@
-import {
-  Card,
-  CardActionArea,
-  CardContent,
-  Paper,
-  Stack,
-  Typography,
-  Box,
-} from '@mui/material';
-import { LineChart } from '@mui/x-charts/LineChart';
+import { Card } from '@heroui/react';
 import { useQuery } from '@tanstack/react-query';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Link as RouterLink } from 'react-router-dom';
 import { api, formatUsd } from '../api/client';
 import { usePrivacy } from '../privacy/PrivacyProvider';
@@ -55,80 +47,53 @@ export function DashboardPage() {
     })) ?? [];
 
   return (
-    <Stack spacing={3}>
+    <div className="flex flex-col gap-8">
       <div>
-        <Typography variant="h4" fontWeight={700}>
-          Accounts
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <h1 className="text-foreground text-3xl font-extrabold tracking-tight">Accounts</h1>
+        <p className="text-muted mt-1 text-sm font-medium">
           Balances update after transfers and bill activity.
-        </Typography>
+        </p>
       </div>
 
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-          This month&apos;s transaction activity (UTC)
-        </Typography>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+      <Card.Root className="rounded-2xl p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">This month&apos;s transaction activity (UTC)</h2>
+        <p className="text-muted mb-6 mt-2 text-xs">
           Net cash flow per day across all your accounts ({year}-{String(month).padStart(2, '0')}).
-        </Typography>
+        </p>
         {chartRows.length > 0 ? (
-          <LineChart
-            dataset={chartRows}
-            xAxis={[
-              {
-                scaleType: 'band',
-                dataKey: 'dayNum',
-                label: 'Day',
-                valueFormatter: (v) => String(v),
-              },
-            ]}
-            yAxis={[{ label: 'Net (USD)' }]}
-            series={[
-              {
-                type: 'line',
-                dataKey: 'netUsd',
-                label: 'Daily net',
-                showMark: false,
-                area: true,
-                valueFormatter: (v) => formatUsd(Math.round((v ?? 0) * 100)),
-              },
-            ]}
-            height={320}
-            grid={{ horizontal: true, vertical: true }}
-            margin={{ left: 72, right: 16 }}
-          />
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={chartRows}>
+              <CartesianGrid strokeDasharray="4 8" opacity={0.35} vertical={false} />
+              <XAxis dataKey="dayNum" tickLine={false} label={{ value: 'Day', position: 'insideBottom', offset: -4 }} />
+              <YAxis tickLine={false} label={{ value: 'Net (USD)', angle: -90, position: 'insideLeft' }} />
+              <Tooltip
+                formatter={(v) => formatUsd(Math.round(Number(v) * 100))}
+                labelFormatter={(_, pts) =>
+                  pts.length ? `Day ${(pts[0] as unknown as { payload?: { date?: string } }).payload?.date}` : ''
+                }
+              />
+              <Line type="monotone" dataKey="netUsd" stroke="#6366f1" strokeWidth={3} dot={false} fill="#6366f133" />
+            </LineChart>
+          </ResponsiveContainer>
         ) : (
-          <Typography color="text.secondary">No activity data yet.</Typography>
+          <p className="text-muted text-sm font-medium">No activity data yet.</p>
         )}
-      </Paper>
+      </Card.Root>
 
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 2,
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-        }}
-      >
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {(data ?? []).map((a) => (
-          <Card key={a.id} variant="outlined">
-            <CardActionArea component={RouterLink} to={`/accounts/${a.id}`}>
-              <CardContent>
-                <Typography variant="overline" color="text.secondary">
-                  {a.type} · {a.mask}
-                </Typography>
-                <Typography variant="h6">{a.nickname}</Typography>
-                <Typography variant="h5" fontWeight={700} sx={{ mt: 1 }}>
-                  {formatMoney(a.balanceCents)}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1 }} color="primary">
-                  View activity →
-                </Typography>
-              </CardContent>
-            </CardActionArea>
-          </Card>
+          <Card.Root key={a.id} className="rounded-2xl border border-neutral-200/80 shadow-sm transition-shadow hover:shadow-md">
+            <RouterLink className="block p-6" to={`/accounts/${a.id}`}>
+              <p className="text-muted mb-3 text-[10px] font-bold uppercase tracking-[0.12em]">
+                {a.type} · {a.mask}
+              </p>
+              <h3 className="text-xl font-semibold">{a.nickname}</h3>
+              <p className="tabular-nums mt-4 text-2xl font-extrabold tracking-tight">{formatMoney(a.balanceCents)}</p>
+              <p className="text-primary mt-4 text-sm font-semibold text-indigo-600">View activity →</p>
+            </RouterLink>
+          </Card.Root>
         ))}
-      </Box>
-    </Stack>
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Skeleton, Stack } from '@mui/material';
+import { Skeleton } from '@heroui/react';
 import { api } from './api/client';
 import { AppLayout } from './layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
@@ -35,21 +35,16 @@ function ProtectedLayout() {
 
   if (isLoading) {
     return (
-      <Box
+      <div
         data-testid="session-loading"
-        sx={{
-          p: 4,
-          minHeight: '60vh',
-          background: (t) =>
-            `linear-gradient(120deg, ${t.palette.primary.light}33 0%, ${t.palette.secondary.light}22 100%)`,
-        }}
+        className="min-h-[60vh] bg-gradient-to-br from-indigo-100/70 to-pink-100/50 px-8 py-10"
       >
-        <Stack spacing={2} maxWidth={560} sx={{ mx: 'auto' }}>
-          <Skeleton variant="rounded" height={56} sx={{ borderRadius: 3 }} animation="wave" />
-          <Skeleton variant="rounded" height={120} sx={{ borderRadius: 3 }} animation="wave" />
-          <Skeleton variant="rounded" height={200} sx={{ borderRadius: 3 }} animation="wave" />
-        </Stack>
-      </Box>
+        <div className="mx-auto flex max-w-lg flex-col gap-3 pt-16">
+          <Skeleton className="h-14 w-full rounded-2xl" />
+          <Skeleton className="h-28 w-full rounded-2xl" />
+          <Skeleton className="h-48 w-full rounded-2xl" />
+        </div>
+      </div>
     );
   }
 
@@ -63,7 +58,6 @@ function ProtectedLayout() {
     </AppLayout>
   );
 }
-
 
 export function App() {
   return (

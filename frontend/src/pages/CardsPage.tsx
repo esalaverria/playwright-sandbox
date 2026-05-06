@@ -1,23 +1,6 @@
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import AddIcon from '@mui/icons-material/Add';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import {
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControlLabel,
-  LinearProgress,
-  MenuItem,
-  Paper,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, Chip, Input, Label, Modal, ProgressBar, Switch, useOverlayState } from '@heroui/react';
+import { AlertTriangle, CreditCard, Plus } from 'lucide-react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '../api/client';
@@ -63,6 +46,9 @@ function formatExp(m?: number | null, y?: number | null): string {
   return `${String(m).padStart(2, '0')}/${y}`;
 }
 
+const paySelect =
+  'bg-field text-field mt-2 flex-1 min-w-[200px] cursor-pointer rounded-xl border px-4 py-2.5 outline-none transition-[border,color,background] focus-visible:border-accent focus-visible:ring-[2px] focus-visible:ring-focus';
+
 export function CardsPage() {
   const qc = useQueryClient();
   const toast = useToast();
@@ -70,6 +56,16 @@ export function CardsPage() {
   const [openNewCard, setOpenNewCard] = useState(false);
   const [cardNick, setCardNick] = useState('');
   const [cardBrand, setCardBrand] = useState<'VISA' | 'MASTERCARD'>('VISA');
+
+  const newCardModal = useOverlayState({ isOpen: openNewCard, onOpenChange: setOpenNewCard });
+
+  const [lostDialog, setLostDialog] = useState<string | null>(null);
+  const lostModal = useOverlayState({
+    isOpen: lostDialog !== null,
+    onOpenChange: (open: boolean) => {
+      if (!open) setLostDialog(null);
+    },
+  });
 
   const accounts = useQuery({
     queryKey: ['accounts'],
@@ -158,7 +154,6 @@ export function CardsPage() {
   const [payFromByCard, setPayFromByCard] = useState<Record<string, string>>({});
   const [payAmountByCard, setPayAmountByCard] = useState<Record<string, string>>({});
   const [revealDetails, setRevealDetails] = useState<Record<string, CardSensitive | undefined>>({});
-  const [lostDialog, setLostDialog] = useState<string | null>(null);
 
   async function fetchSensitive(id: string) {
     const { data } = await api.get<{ details: CardSensitive }>(`/accounts/${id}/sensitive-card`);
@@ -176,26 +171,24 @@ export function CardsPage() {
   }
 
   return (
-    <Stack spacing={3}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ sm: 'flex-start' }}>
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <Typography variant="h4" fontWeight={800}>
-            Cards
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">Cards</h1>
+          <p className="mt-2 max-w-2xl text-sm font-medium text-neutral-600">
             Pay balances, manage limits, and view demo card numbers safely in this sandbox.
-          </Typography>
+          </p>
         </div>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenNewCard(true)} sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}>
+        <Button variant="primary" className="shrink-0 self-stretch sm:self-center" onPress={() => setOpenNewCard(true)}>
+          <Plus aria-hidden className="mr-2 size-5" strokeWidth={2.25} />
           Add new card
         </Button>
-      </Stack>
+      </div>
 
       {creditCards.map((c) => {
         const limit = c.creditLimitCents;
         const debtCents = Math.max(0, -c.balanceCents);
-        const util =
-          limit != null && limit > 0 ? Math.min(100, Math.round((debtCents / limit) * 100)) : 0;
+        const util = limit != null && limit > 0 ? Math.min(100, Math.round((debtCents / limit) * 100)) : 0;
         const payFrom = payFromByCard[c.id] ?? fundingAccounts[0]?.id ?? '';
         const payAmt = payAmountByCard[c.id] ?? '';
         const isActive = c.cardLifecycle === 'ACTIVE';
@@ -203,175 +196,142 @@ export function CardsPage() {
         const sens = revealDetails[c.id];
 
         return (
-          <Paper
+          <article
             key={c.id}
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-              boxShadow: (t) => t.shadows[1],
-            }}
+            className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
           >
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ md: 'flex-start' }}>
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <CreditCardIcon color="primary" sx={{ fontSize: 40 }} />
+            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+              <div className="flex flex-row gap-4">
+                <CreditCard aria-hidden className="size-10 shrink-0 text-indigo-600" strokeWidth={1.75} />
                 <div>
-                  <Typography variant="h6" fontWeight={800}>
-                    {c.nickname}
-                  </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
-                    <Chip size="small" label={brand} variant="outlined" />
+                  <h2 className="text-xl font-extrabold text-neutral-900">{c.nickname}</h2>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Chip variant="secondary" color="default" size="sm">
+                      <Chip.Label>{brand}</Chip.Label>
+                    </Chip>
                     <Chip
-                      size="small"
-                      label={c.cardLifecycle.replace(/_/g, ' ')}
+                      variant={isActive ? 'soft' : 'secondary'}
                       color={isActive ? 'success' : 'default'}
-                      variant="outlined"
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {c.mask}
-                    </Typography>
-                  </Stack>
+                      size="sm"
+                    >
+                      <Chip.Label>{c.cardLifecycle.replace(/_/g, ' ')}</Chip.Label>
+                    </Chip>
+                    <span className="text-xs font-medium text-neutral-500">{c.mask}</span>
+                  </div>
                 </div>
-              </Stack>
-              <Typography variant="body2" fontWeight={600} color="text.secondary">
-                {c.nameOnCard}
-              </Typography>
-            </Stack>
+              </div>
+              <p className="text-sm font-semibold text-neutral-600 md:text-right">{c.nameOnCard}</p>
+            </div>
 
-            <Typography variant="body2" sx={{ mt: 1.5 }}>
+            <p className="mt-4 text-sm text-neutral-800">
               Balance owed:{' '}
-              <strong>{formatMoney(c.balanceCents)}</strong>
-            </Typography>
+              <strong className="tabular-nums">{formatMoney(c.balanceCents)}</strong>
+            </p>
 
             {limit != null ? (
               <>
-                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                <p className="mt-2 text-sm text-neutral-700">
                   Limit: {formatMoney(limit)} · Utilization {util}%
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
+                </p>
+                <ProgressBar.Root
                   value={util}
-                  sx={{
-                    mt: 1.5,
-                    height: 8,
-                    borderRadius: 1,
-                    bgcolor: 'action.hover',
-                  }}
-                />
+                  minValue={0}
+                  maxValue={100}
+                  aria-label="Credit utilization"
+                  className="mt-3"
+                >
+                  <ProgressBar.Track className="h-2 rounded-full bg-neutral-200">
+                    <ProgressBar.Fill />
+                  </ProgressBar.Track>
+                </ProgressBar.Root>
               </>
             ) : (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }} display="block">
-                No credit limit on file.
-              </Typography>
+              <p className="mt-4 block text-xs text-neutral-500">No credit limit on file.</p>
             )}
 
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-              Expires {formatExp(c.expMonth, c.expYear)}
-            </Typography>
+            <p className="mt-4 text-sm text-neutral-600">Expires {formatExp(c.expMonth, c.expYear)}</p>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={c.frozen}
-                    disabled={!isActive}
-                    onChange={(_, v) => toggleFreeze.mutate({ id: c.id, frozen: v })}
-                  />
-                }
-                label="Freeze card"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={c.allowOverLimit}
-                    disabled={!isActive}
-                    onChange={(_, v) => toggleOverLimit.mutate({ id: c.id, allowOverLimit: v })}
-                  />
-                }
-                label="Allow over limit"
-              />
-            </Stack>
+            <div className="mt-4 flex flex-wrap gap-8">
+              <Switch
+                isSelected={c.frozen}
+                isDisabled={!isActive}
+                onChange={(next: boolean) => toggleFreeze.mutate({ id: c.id, frozen: next })}
+              >
+                <Switch.Content className="flex cursor-pointer items-center gap-3">
+                  <Switch.Control className="">
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <span className="text-sm font-medium text-neutral-800">Freeze card</span>
+                </Switch.Content>
+              </Switch>
+              <Switch
+                isSelected={c.allowOverLimit}
+                isDisabled={!isActive}
+                onChange={(next: boolean) => toggleOverLimit.mutate({ id: c.id, allowOverLimit: next })}
+              >
+                <Switch.Content className="flex cursor-pointer items-center gap-3">
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <span className="text-sm font-medium text-neutral-800">Allow over limit</span>
+                </Switch.Content>
+              </Switch>
+            </div>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+            <div className="mt-4 flex flex-wrap gap-2">
               <Button
-                size="small"
-                variant="outlined"
-                color="warning"
-                disabled={!isActive || cancelCard.isPending}
-                onClick={() => cancelCard.mutate(c.id)}
+                size="sm"
+                variant="outline"
+                isDisabled={!isActive || cancelCard.isPending}
+                onPress={() => cancelCard.mutate(c.id)}
               >
                 Cancel card
               </Button>
               <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                startIcon={<WarningAmberIcon />}
-                disabled={!isActive || reportLostReplace.isPending}
-                onClick={() => setLostDialog(c.id)}
+                size="sm"
+                variant="danger-soft"
+                isDisabled={!isActive || reportLostReplace.isPending}
+                onPress={() => setLostDialog(c.id)}
               >
+                <AlertTriangle aria-hidden className="mr-1.5 inline size-4" />
                 Report lost
               </Button>
               {!sens ? (
-                <Button size="small" variant="text" onClick={() => fetchSensitive(c.id)}>
+                <Button size="sm" variant="ghost" onPress={() => fetchSensitive(c.id)}>
                   Reveal card numbers
                 </Button>
               ) : (
-                <Button size="small" variant="text" color="inherit" onClick={() => hideSensitive(c.id)}>
+                <Button size="sm" variant="ghost" onPress={() => hideSensitive(c.id)}>
                   Hide card numbers
                 </Button>
               )}
-            </Stack>
+            </div>
 
             {sens ? (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: (t) => (t.palette.mode === 'light' ? 'grey.50' : 'action.hover'),
-                }}
-              >
-                <Stack spacing={0.75}>
-                  <Typography variant="caption" color="text.secondary">
-                    Card number
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontFamily: 'ui-monospace, monospace', letterSpacing: 0.5 }}>
+              <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Card number</p>
+                  <p className="font-mono text-base tracking-wide text-neutral-900">
                     {sens.panFull?.replace(/(\d{4})/g, '$1 ').trim()}
-                  </Typography>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ pt: 1 }}>
+                  </p>
+                  <div className="flex flex-wrap gap-8 pt-2">
                     <div>
-                      <Typography variant="caption" color="text.secondary">
-                        CVV
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {sens.cvv ?? '—'}
-                      </Typography>
+                      <p className="text-xs font-medium text-neutral-500">CVV</p>
+                      <p className="text-base font-bold text-neutral-900">{sens.cvv ?? '—'}</p>
                     </div>
                     <div>
-                      <Typography variant="caption" color="text.secondary">
-                        Exp date
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {formatExp(sens.expMonth, sens.expYear)}
-                      </Typography>
+                      <p className="text-xs font-medium text-neutral-500">Exp date</p>
+                      <p className="text-base font-bold text-neutral-900">{formatExp(sens.expMonth, sens.expYear)}</p>
                     </div>
-                  </Stack>
-                </Stack>
-              </Box>
+                  </div>
+                </div>
+              </div>
             ) : null}
 
-            <Typography variant="subtitle1" fontWeight={700} sx={{ mt: 3, mb: 1 }}>
-              Pay from your account
-            </Typography>
-            <Box
-              component="form"
-              onSubmit={(e) => {
+            <h3 className="mb-3 mt-6 text-base font-bold text-neutral-900">Pay from your account</h3>
+            <form
+              className="max-w-3xl"
+              onSubmit={(e: FormEvent<HTMLFormElement>) => {
                 e.preventDefault();
                 const dollars = Number(payAmt);
                 if (!payFrom || !Number.isFinite(dollars) || dollars <= 0) return;
@@ -382,107 +342,137 @@ export function CardsPage() {
                 });
               }}
             >
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={2}
-                alignItems={{ sm: 'stretch' }}
-                sx={{ maxWidth: 720 }}
-              >
-                <TextField
-                  select
-                  label="Pay from"
-                  size="small"
-                  required
-                  sx={{ flex: 1, minWidth: 200 }}
-                  value={payFrom}
-                  onChange={(e) => setPayFromByCard((m) => ({ ...m, [c.id]: e.target.value }))}
-                >
-                  {fundingAccounts.map((a) => (
-                    <MenuItem key={a.id} value={a.id}>
-                      {a.nickname} ({formatMoney(a.balanceCents)})
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <CurrencyTextField
-                  label="Amount"
-                  size="small"
-                  required
-                  sx={{ flex: 1, minWidth: 160 }}
-                  value={payAmt}
-                  onChangeValue={(v) => setPayAmountByCard((m) => ({ ...m, [c.id]: v }))}
-                  inputProps={{ inputMode: 'decimal' }}
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={payCard.isPending || !isActive}
-                  sx={{
-                    px: 4,
-                    py: 1.25,
-                    minWidth: { sm: 160 },
-                    whiteSpace: 'nowrap',
-                    alignSelf: { xs: 'stretch', sm: 'auto' },
-                  }}
-                >
+              <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+                <div className="min-w-[200px] flex-1">
+                  <Label htmlFor={`pay-from-${c.id}`}>Pay from</Label>
+                  <select
+                    id={`pay-from-${c.id}`}
+                    required
+                    aria-label={`Pay ${c.nickname} from account`}
+                    className={paySelect}
+                    value={payFrom}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                      setPayFromByCard((m) => ({ ...m, [c.id]: e.target.value }))
+                    }
+                  >
+                    {fundingAccounts.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.nickname} ({formatMoney(a.balanceCents)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="min-w-[160px] flex-1">
+                  <CurrencyTextField
+                    label="Amount"
+                    required
+                    value={payAmt}
+                    onChangeValue={(v) => setPayAmountByCard((m) => ({ ...m, [c.id]: v }))}
+                  />
+                </div>
+                <Button type="submit" variant="primary" size="lg" className="min-w-[140px]" isDisabled={payCard.isPending || !isActive}>
                   Pay card
                 </Button>
-              </Stack>
-            </Box>
-          </Paper>
+              </div>
+            </form>
+          </article>
         );
       })}
 
-      <Dialog open={!!lostDialog} onClose={() => setLostDialog(null)}>
-        <DialogTitle>Replace lost card?</DialogTitle>
-        <DialogContent>
-          <Typography>
-            We&apos;ll issue a new card with new numbers, move your balance and transaction history to it, and close the lost card.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLostDialog(null)}>Back</Button>
-          <Button
-            color="error"
-            variant="contained"
-            disabled={reportLostReplace.isPending}
-            onClick={async () => {
-              if (!lostDialog) return;
-              try {
-                await reportLostReplace.mutateAsync(lostDialog);
-                setLostDialog(null);
-              } catch {
-                /* toast shows error */
-              }
-            }}
-          >
-            Confirm replacement
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <Modal state={lostModal}>
+        <Modal.Backdrop>
+          <Modal.Container size="sm" scroll="inside">
+            <Modal.Dialog>
+              <Modal.CloseTrigger aria-label="Close dialog" />
+              <Modal.Header>
+                <Modal.Heading>Replace lost card?</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p className="text-sm text-neutral-700">
+                  We&apos;ll issue a new card with new numbers, move your balance and transaction history to it, and
+                  close the lost card.
+                </p>
+              </Modal.Body>
+              <Modal.Footer className="flex justify-end gap-2">
+                <Button variant="ghost" onPress={() => lostModal.close()}>
+                  Back
+                </Button>
+                <Button
+                  variant="danger"
+                  isDisabled={reportLostReplace.isPending}
+                  onPress={async () => {
+                    if (!lostDialog) return;
+                    try {
+                      await reportLostReplace.mutateAsync(lostDialog);
+                      setLostDialog(null);
+                    } catch {
+                      /* toast handles error */
+                    }
+                  }}
+                >
+                  Confirm replacement
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
 
-      <Dialog open={openNewCard} onClose={() => setOpenNewCard(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Add new card</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField label="Nickname (optional)" value={cardNick} onChange={(e) => setCardNick(e.target.value)} fullWidth />
-            <TextField select label="Brand" value={cardBrand} onChange={(e) => setCardBrand(e.target.value as 'VISA' | 'MASTERCARD')} fullWidth>
-              <MenuItem value="VISA">Visa</MenuItem>
-              <MenuItem value="MASTERCARD">Mastercard</MenuItem>
-            </TextField>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenNewCard(false)}>Cancel</Button>
-          <Button variant="contained" disabled={requestCard.isPending} onClick={() => requestCard.mutate()}>
-            Add card
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <Modal state={newCardModal}>
+        <Modal.Backdrop>
+          <Modal.Container size="xs" scroll="inside">
+            <Modal.Dialog>
+              <Modal.CloseTrigger aria-label="Close dialog" />
+              <Modal.Header>
+                <Modal.Heading>Add new card</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="flex flex-col gap-4">
+                <div>
+                  <Label htmlFor="new-card-nick" className="font-medium">
+                    Nickname (optional)
+                  </Label>
+                  <Input
+                    id="new-card-nick"
+                    value={cardNick}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setCardNick(e.target.value)}
+                    className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-card-brand" className="font-medium">
+                    Brand
+                  </Label>
+                  <select
+                    id="new-card-brand"
+                    value={cardBrand}
+                    className={`${paySelect} mt-2 w-full`}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                      setCardBrand(e.target.value as 'VISA' | 'MASTERCARD')
+                    }
+                  >
+                    <option value="VISA">Visa</option>
+                    <option value="MASTERCARD">Mastercard</option>
+                  </select>
+                </div>
+              </Modal.Body>
+              <Modal.Footer className="flex justify-end gap-2">
+                <Button variant="ghost" onPress={() => newCardModal.close()}>
+                  Cancel
+                </Button>
+                <Button variant="primary" isDisabled={requestCard.isPending} onPress={() => requestCard.mutate()}>
+                  Add card
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
 
       {creditCards.length === 0 ? (
-        <Typography color="text.secondary">No credit accounts yet — use Add new card above or open one under Accounts.</Typography>
+        <p className="text-sm font-medium text-neutral-600">
+          No credit accounts yet — use Add new card above or open one under Accounts.
+        </p>
       ) : null}
-    </Stack>
+    </div>
   );
 }
