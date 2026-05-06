@@ -1,7 +1,13 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcryptjs';
-import { PrismaClient, AccountType, LedgerStatus, PaymentStatus } from '../src/generated/prisma/client';
+import {
+  PrismaClient,
+  AccountType,
+  LedgerStatus,
+  PaymentStatus,
+  type Account,
+} from '../src/generated/prisma/client';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -160,15 +166,15 @@ async function main() {
     include: { accounts: true },
   });
 
-  const aliceChecking = alice.accounts.find((a) => a.type === AccountType.CHECKING)!;
-  const aliceSavings = alice.accounts.find((a) => a.type === AccountType.SAVINGS)!;
-  const aliceCredit = alice.accounts.find((a) => a.type === AccountType.CREDIT)!;
-  const bobChecking = bob.accounts.find((a) => a.type === AccountType.CHECKING)!;
-  const bobSavings = bob.accounts.find((a) => a.type === AccountType.SAVINGS)!;
-  const bobCredit = bob.accounts.find((a) => a.type === AccountType.CREDIT)!;
+  const aliceChecking = alice.accounts.find((a: Account) => a.type === AccountType.CHECKING)!;
+  const aliceSavings = alice.accounts.find((a: Account) => a.type === AccountType.SAVINGS)!;
+  const aliceCredit = alice.accounts.find((a: Account) => a.type === AccountType.CREDIT)!;
+  const bobChecking = bob.accounts.find((a: Account) => a.type === AccountType.CHECKING)!;
+  const bobSavings = bob.accounts.find((a: Account) => a.type === AccountType.SAVINGS)!;
+  const bobCredit = bob.accounts.find((a: Account) => a.type === AccountType.CREDIT)!;
   const danChecking = dan.accounts[0]!;
-  const eveChecking = eve.accounts.find((a) => a.type === AccountType.CHECKING)!;
-  const eveCredit = eve.accounts.find((a) => a.type === AccountType.CREDIT)!;
+  const eveChecking = eve.accounts.find((a: Account) => a.type === AccountType.CHECKING)!;
+  const eveCredit = eve.accounts.find((a: Account) => a.type === AccountType.CREDIT)!;
 
   type Row = {
     accountId: string;
