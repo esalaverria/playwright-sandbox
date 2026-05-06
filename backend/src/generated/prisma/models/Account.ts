@@ -29,11 +29,15 @@ export type AggregateAccount = {
 export type AccountAvgAggregateOutputType = {
   balanceCents: number | null
   creditLimitCents: number | null
+  expMonth: number | null
+  expYear: number | null
 }
 
 export type AccountSumAggregateOutputType = {
   balanceCents: number | null
   creditLimitCents: number | null
+  expMonth: number | null
+  expYear: number | null
 }
 
 export type AccountMinAggregateOutputType = {
@@ -48,6 +52,15 @@ export type AccountMinAggregateOutputType = {
   creditLimitCents: number | null
   allowOverLimit: boolean | null
   createdAt: Date | null
+  closedAt: Date | null
+  accountNumberFull: string | null
+  cardBrand: $Enums.CardBrand | null
+  cardLifecycle: $Enums.CardLifecycleStatus | null
+  panFull: string | null
+  cvv: string | null
+  expMonth: number | null
+  expYear: number | null
+  nameOnCard: string | null
 }
 
 export type AccountMaxAggregateOutputType = {
@@ -62,6 +75,15 @@ export type AccountMaxAggregateOutputType = {
   creditLimitCents: number | null
   allowOverLimit: boolean | null
   createdAt: Date | null
+  closedAt: Date | null
+  accountNumberFull: string | null
+  cardBrand: $Enums.CardBrand | null
+  cardLifecycle: $Enums.CardLifecycleStatus | null
+  panFull: string | null
+  cvv: string | null
+  expMonth: number | null
+  expYear: number | null
+  nameOnCard: string | null
 }
 
 export type AccountCountAggregateOutputType = {
@@ -76,6 +98,15 @@ export type AccountCountAggregateOutputType = {
   creditLimitCents: number
   allowOverLimit: number
   createdAt: number
+  closedAt: number
+  accountNumberFull: number
+  cardBrand: number
+  cardLifecycle: number
+  panFull: number
+  cvv: number
+  expMonth: number
+  expYear: number
+  nameOnCard: number
   _all: number
 }
 
@@ -83,11 +114,15 @@ export type AccountCountAggregateOutputType = {
 export type AccountAvgAggregateInputType = {
   balanceCents?: true
   creditLimitCents?: true
+  expMonth?: true
+  expYear?: true
 }
 
 export type AccountSumAggregateInputType = {
   balanceCents?: true
   creditLimitCents?: true
+  expMonth?: true
+  expYear?: true
 }
 
 export type AccountMinAggregateInputType = {
@@ -102,6 +137,15 @@ export type AccountMinAggregateInputType = {
   creditLimitCents?: true
   allowOverLimit?: true
   createdAt?: true
+  closedAt?: true
+  accountNumberFull?: true
+  cardBrand?: true
+  cardLifecycle?: true
+  panFull?: true
+  cvv?: true
+  expMonth?: true
+  expYear?: true
+  nameOnCard?: true
 }
 
 export type AccountMaxAggregateInputType = {
@@ -116,6 +160,15 @@ export type AccountMaxAggregateInputType = {
   creditLimitCents?: true
   allowOverLimit?: true
   createdAt?: true
+  closedAt?: true
+  accountNumberFull?: true
+  cardBrand?: true
+  cardLifecycle?: true
+  panFull?: true
+  cvv?: true
+  expMonth?: true
+  expYear?: true
+  nameOnCard?: true
 }
 
 export type AccountCountAggregateInputType = {
@@ -130,6 +183,15 @@ export type AccountCountAggregateInputType = {
   creditLimitCents?: true
   allowOverLimit?: true
   createdAt?: true
+  closedAt?: true
+  accountNumberFull?: true
+  cardBrand?: true
+  cardLifecycle?: true
+  panFull?: true
+  cvv?: true
+  expMonth?: true
+  expYear?: true
+  nameOnCard?: true
   _all?: true
 }
 
@@ -231,6 +293,15 @@ export type AccountGroupByOutputType = {
   creditLimitCents: number | null
   allowOverLimit: boolean
   createdAt: Date
+  closedAt: Date | null
+  accountNumberFull: string | null
+  cardBrand: $Enums.CardBrand | null
+  cardLifecycle: $Enums.CardLifecycleStatus
+  panFull: string | null
+  cvv: string | null
+  expMonth: number | null
+  expYear: number | null
+  nameOnCard: string | null
   _count: AccountCountAggregateOutputType | null
   _avg: AccountAvgAggregateOutputType | null
   _sum: AccountSumAggregateOutputType | null
@@ -268,6 +339,15 @@ export type AccountWhereInput = {
   creditLimitCents?: Prisma.IntNullableFilter<"Account"> | number | null
   allowOverLimit?: Prisma.BoolFilter<"Account"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Account"> | Date | string
+  closedAt?: Prisma.DateTimeNullableFilter<"Account"> | Date | string | null
+  accountNumberFull?: Prisma.StringNullableFilter<"Account"> | string | null
+  cardBrand?: Prisma.EnumCardBrandNullableFilter<"Account"> | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFilter<"Account"> | $Enums.CardLifecycleStatus
+  panFull?: Prisma.StringNullableFilter<"Account"> | string | null
+  cvv?: Prisma.StringNullableFilter<"Account"> | string | null
+  expMonth?: Prisma.IntNullableFilter<"Account"> | number | null
+  expYear?: Prisma.IntNullableFilter<"Account"> | number | null
+  nameOnCard?: Prisma.StringNullableFilter<"Account"> | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   ledgerEntries?: Prisma.LedgerEntryListRelationFilter
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentListRelationFilter
@@ -285,6 +365,15 @@ export type AccountOrderByWithRelationInput = {
   creditLimitCents?: Prisma.SortOrderInput | Prisma.SortOrder
   allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  accountNumberFull?: Prisma.SortOrderInput | Prisma.SortOrder
+  cardBrand?: Prisma.SortOrderInput | Prisma.SortOrder
+  cardLifecycle?: Prisma.SortOrder
+  panFull?: Prisma.SortOrderInput | Prisma.SortOrder
+  cvv?: Prisma.SortOrderInput | Prisma.SortOrder
+  expMonth?: Prisma.SortOrderInput | Prisma.SortOrder
+  expYear?: Prisma.SortOrderInput | Prisma.SortOrder
+  nameOnCard?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   ledgerEntries?: Prisma.LedgerEntryOrderByRelationAggregateInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentOrderByRelationAggregateInput
@@ -305,6 +394,15 @@ export type AccountWhereUniqueInput = Prisma.AtLeast<{
   creditLimitCents?: Prisma.IntNullableFilter<"Account"> | number | null
   allowOverLimit?: Prisma.BoolFilter<"Account"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Account"> | Date | string
+  closedAt?: Prisma.DateTimeNullableFilter<"Account"> | Date | string | null
+  accountNumberFull?: Prisma.StringNullableFilter<"Account"> | string | null
+  cardBrand?: Prisma.EnumCardBrandNullableFilter<"Account"> | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFilter<"Account"> | $Enums.CardLifecycleStatus
+  panFull?: Prisma.StringNullableFilter<"Account"> | string | null
+  cvv?: Prisma.StringNullableFilter<"Account"> | string | null
+  expMonth?: Prisma.IntNullableFilter<"Account"> | number | null
+  expYear?: Prisma.IntNullableFilter<"Account"> | number | null
+  nameOnCard?: Prisma.StringNullableFilter<"Account"> | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   ledgerEntries?: Prisma.LedgerEntryListRelationFilter
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentListRelationFilter
@@ -322,6 +420,15 @@ export type AccountOrderByWithAggregationInput = {
   creditLimitCents?: Prisma.SortOrderInput | Prisma.SortOrder
   allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  accountNumberFull?: Prisma.SortOrderInput | Prisma.SortOrder
+  cardBrand?: Prisma.SortOrderInput | Prisma.SortOrder
+  cardLifecycle?: Prisma.SortOrder
+  panFull?: Prisma.SortOrderInput | Prisma.SortOrder
+  cvv?: Prisma.SortOrderInput | Prisma.SortOrder
+  expMonth?: Prisma.SortOrderInput | Prisma.SortOrder
+  expYear?: Prisma.SortOrderInput | Prisma.SortOrder
+  nameOnCard?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AccountCountOrderByAggregateInput
   _avg?: Prisma.AccountAvgOrderByAggregateInput
   _max?: Prisma.AccountMaxOrderByAggregateInput
@@ -344,6 +451,15 @@ export type AccountScalarWhereWithAggregatesInput = {
   creditLimitCents?: Prisma.IntNullableWithAggregatesFilter<"Account"> | number | null
   allowOverLimit?: Prisma.BoolWithAggregatesFilter<"Account"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Account"> | Date | string
+  closedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Account"> | Date | string | null
+  accountNumberFull?: Prisma.StringNullableWithAggregatesFilter<"Account"> | string | null
+  cardBrand?: Prisma.EnumCardBrandNullableWithAggregatesFilter<"Account"> | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusWithAggregatesFilter<"Account"> | $Enums.CardLifecycleStatus
+  panFull?: Prisma.StringNullableWithAggregatesFilter<"Account"> | string | null
+  cvv?: Prisma.StringNullableWithAggregatesFilter<"Account"> | string | null
+  expMonth?: Prisma.IntNullableWithAggregatesFilter<"Account"> | number | null
+  expYear?: Prisma.IntNullableWithAggregatesFilter<"Account"> | number | null
+  nameOnCard?: Prisma.StringNullableWithAggregatesFilter<"Account"> | string | null
 }
 
 export type AccountCreateInput = {
@@ -357,6 +473,15 @@ export type AccountCreateInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
   user: Prisma.UserCreateNestedOneWithoutAccountsInput
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentCreateNestedManyWithoutFromAccountInput
@@ -374,6 +499,15 @@ export type AccountUncheckedCreateInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
 }
@@ -389,6 +523,15 @@ export type AccountUpdateInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUpdateManyWithoutFromAccountNestedInput
@@ -406,6 +549,15 @@ export type AccountUncheckedUpdateInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
 }
@@ -422,6 +574,15 @@ export type AccountCreateManyInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
 }
 
 export type AccountUpdateManyMutationInput = {
@@ -435,6 +596,15 @@ export type AccountUpdateManyMutationInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AccountUncheckedUpdateManyInput = {
@@ -449,6 +619,15 @@ export type AccountUncheckedUpdateManyInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AccountListRelationFilter = {
@@ -473,11 +652,22 @@ export type AccountCountOrderByAggregateInput = {
   creditLimitCents?: Prisma.SortOrder
   allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrder
+  accountNumberFull?: Prisma.SortOrder
+  cardBrand?: Prisma.SortOrder
+  cardLifecycle?: Prisma.SortOrder
+  panFull?: Prisma.SortOrder
+  cvv?: Prisma.SortOrder
+  expMonth?: Prisma.SortOrder
+  expYear?: Prisma.SortOrder
+  nameOnCard?: Prisma.SortOrder
 }
 
 export type AccountAvgOrderByAggregateInput = {
   balanceCents?: Prisma.SortOrder
   creditLimitCents?: Prisma.SortOrder
+  expMonth?: Prisma.SortOrder
+  expYear?: Prisma.SortOrder
 }
 
 export type AccountMaxOrderByAggregateInput = {
@@ -492,6 +682,15 @@ export type AccountMaxOrderByAggregateInput = {
   creditLimitCents?: Prisma.SortOrder
   allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrder
+  accountNumberFull?: Prisma.SortOrder
+  cardBrand?: Prisma.SortOrder
+  cardLifecycle?: Prisma.SortOrder
+  panFull?: Prisma.SortOrder
+  cvv?: Prisma.SortOrder
+  expMonth?: Prisma.SortOrder
+  expYear?: Prisma.SortOrder
+  nameOnCard?: Prisma.SortOrder
 }
 
 export type AccountMinOrderByAggregateInput = {
@@ -506,11 +705,22 @@ export type AccountMinOrderByAggregateInput = {
   creditLimitCents?: Prisma.SortOrder
   allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  closedAt?: Prisma.SortOrder
+  accountNumberFull?: Prisma.SortOrder
+  cardBrand?: Prisma.SortOrder
+  cardLifecycle?: Prisma.SortOrder
+  panFull?: Prisma.SortOrder
+  cvv?: Prisma.SortOrder
+  expMonth?: Prisma.SortOrder
+  expYear?: Prisma.SortOrder
+  nameOnCard?: Prisma.SortOrder
 }
 
 export type AccountSumOrderByAggregateInput = {
   balanceCents?: Prisma.SortOrder
   creditLimitCents?: Prisma.SortOrder
+  expMonth?: Prisma.SortOrder
+  expYear?: Prisma.SortOrder
 }
 
 export type AccountScalarRelationFilter = {
@@ -580,6 +790,18 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
+export type NullableEnumCardBrandFieldUpdateOperationsInput = {
+  set?: $Enums.CardBrand | null
+}
+
+export type EnumCardLifecycleStatusFieldUpdateOperationsInput = {
+  set?: $Enums.CardLifecycleStatus
+}
+
 export type AccountCreateNestedOneWithoutLedgerEntriesInput = {
   create?: Prisma.XOR<Prisma.AccountCreateWithoutLedgerEntriesInput, Prisma.AccountUncheckedCreateWithoutLedgerEntriesInput>
   connectOrCreate?: Prisma.AccountCreateOrConnectWithoutLedgerEntriesInput
@@ -619,6 +841,15 @@ export type AccountCreateWithoutUserInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentCreateNestedManyWithoutFromAccountInput
 }
@@ -634,6 +865,15 @@ export type AccountUncheckedCreateWithoutUserInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
 }
@@ -679,6 +919,15 @@ export type AccountScalarWhereInput = {
   creditLimitCents?: Prisma.IntNullableFilter<"Account"> | number | null
   allowOverLimit?: Prisma.BoolFilter<"Account"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Account"> | Date | string
+  closedAt?: Prisma.DateTimeNullableFilter<"Account"> | Date | string | null
+  accountNumberFull?: Prisma.StringNullableFilter<"Account"> | string | null
+  cardBrand?: Prisma.EnumCardBrandNullableFilter<"Account"> | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFilter<"Account"> | $Enums.CardLifecycleStatus
+  panFull?: Prisma.StringNullableFilter<"Account"> | string | null
+  cvv?: Prisma.StringNullableFilter<"Account"> | string | null
+  expMonth?: Prisma.IntNullableFilter<"Account"> | number | null
+  expYear?: Prisma.IntNullableFilter<"Account"> | number | null
+  nameOnCard?: Prisma.StringNullableFilter<"Account"> | string | null
 }
 
 export type AccountCreateWithoutLedgerEntriesInput = {
@@ -692,6 +941,15 @@ export type AccountCreateWithoutLedgerEntriesInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
   user: Prisma.UserCreateNestedOneWithoutAccountsInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentCreateNestedManyWithoutFromAccountInput
 }
@@ -708,6 +966,15 @@ export type AccountUncheckedCreateWithoutLedgerEntriesInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
 }
 
@@ -738,6 +1005,15 @@ export type AccountUpdateWithoutLedgerEntriesInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUpdateManyWithoutFromAccountNestedInput
 }
@@ -754,6 +1030,15 @@ export type AccountUncheckedUpdateWithoutLedgerEntriesInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
 }
 
@@ -768,6 +1053,15 @@ export type AccountCreateWithoutScheduledPaymentsFromInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
   user: Prisma.UserCreateNestedOneWithoutAccountsInput
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
 }
@@ -784,6 +1078,15 @@ export type AccountUncheckedCreateWithoutScheduledPaymentsFromInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
 }
 
@@ -814,6 +1117,15 @@ export type AccountUpdateWithoutScheduledPaymentsFromInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
 }
@@ -830,6 +1142,15 @@ export type AccountUncheckedUpdateWithoutScheduledPaymentsFromInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
 }
 
@@ -844,6 +1165,15 @@ export type AccountCreateManyUserInput = {
   creditLimitCents?: number | null
   allowOverLimit?: boolean
   createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
 }
 
 export type AccountUpdateWithoutUserInput = {
@@ -857,6 +1187,15 @@ export type AccountUpdateWithoutUserInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUpdateManyWithoutFromAccountNestedInput
 }
@@ -872,6 +1211,15 @@ export type AccountUncheckedUpdateWithoutUserInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
 }
@@ -887,6 +1235,15 @@ export type AccountUncheckedUpdateManyWithoutUserInput = {
   creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -941,6 +1298,15 @@ export type AccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   creditLimitCents?: boolean
   allowOverLimit?: boolean
   createdAt?: boolean
+  closedAt?: boolean
+  accountNumberFull?: boolean
+  cardBrand?: boolean
+  cardLifecycle?: boolean
+  panFull?: boolean
+  cvv?: boolean
+  expMonth?: boolean
+  expYear?: boolean
+  nameOnCard?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ledgerEntries?: boolean | Prisma.Account$ledgerEntriesArgs<ExtArgs>
   scheduledPaymentsFrom?: boolean | Prisma.Account$scheduledPaymentsFromArgs<ExtArgs>
@@ -959,6 +1325,15 @@ export type AccountSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   creditLimitCents?: boolean
   allowOverLimit?: boolean
   createdAt?: boolean
+  closedAt?: boolean
+  accountNumberFull?: boolean
+  cardBrand?: boolean
+  cardLifecycle?: boolean
+  panFull?: boolean
+  cvv?: boolean
+  expMonth?: boolean
+  expYear?: boolean
+  nameOnCard?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["account"]>
 
@@ -974,6 +1349,15 @@ export type AccountSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   creditLimitCents?: boolean
   allowOverLimit?: boolean
   createdAt?: boolean
+  closedAt?: boolean
+  accountNumberFull?: boolean
+  cardBrand?: boolean
+  cardLifecycle?: boolean
+  panFull?: boolean
+  cvv?: boolean
+  expMonth?: boolean
+  expYear?: boolean
+  nameOnCard?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["account"]>
 
@@ -989,9 +1373,18 @@ export type AccountSelectScalar = {
   creditLimitCents?: boolean
   allowOverLimit?: boolean
   createdAt?: boolean
+  closedAt?: boolean
+  accountNumberFull?: boolean
+  cardBrand?: boolean
+  cardLifecycle?: boolean
+  panFull?: boolean
+  cvv?: boolean
+  expMonth?: boolean
+  expYear?: boolean
+  nameOnCard?: boolean
 }
 
-export type AccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "nickname" | "mask" | "currency" | "balanceCents" | "frozen" | "creditLimitCents" | "allowOverLimit" | "createdAt", ExtArgs["result"]["account"]>
+export type AccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "nickname" | "mask" | "currency" | "balanceCents" | "frozen" | "creditLimitCents" | "allowOverLimit" | "createdAt" | "closedAt" | "accountNumberFull" | "cardBrand" | "cardLifecycle" | "panFull" | "cvv" | "expMonth" | "expYear" | "nameOnCard", ExtArgs["result"]["account"]>
 export type AccountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ledgerEntries?: boolean | Prisma.Account$ledgerEntriesArgs<ExtArgs>
@@ -1021,15 +1414,24 @@ export type $AccountPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     currency: string
     balanceCents: number
     frozen: boolean
-    /**
-     * Max debt in cents for CREDIT (positive cap). Ignored for non-credit accounts.
-     */
     creditLimitCents: number | null
-    /**
-     * When false, charges/cash advances cannot push debt above creditLimitCents.
-     */
     allowOverLimit: boolean
     createdAt: Date
+    /**
+     * Soft-close: account excluded from normal lists when set.
+     */
+    closedAt: Date | null
+    /**
+     * Fake full account number for deposit accounts (UI reveal).
+     */
+    accountNumberFull: string | null
+    cardBrand: $Enums.CardBrand | null
+    cardLifecycle: $Enums.CardLifecycleStatus
+    panFull: string | null
+    cvv: string | null
+    expMonth: number | null
+    expYear: number | null
+    nameOnCard: string | null
   }, ExtArgs["result"]["account"]>
   composites: {}
 }
@@ -1467,6 +1869,15 @@ export interface AccountFieldRefs {
   readonly creditLimitCents: Prisma.FieldRef<"Account", 'Int'>
   readonly allowOverLimit: Prisma.FieldRef<"Account", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Account", 'DateTime'>
+  readonly closedAt: Prisma.FieldRef<"Account", 'DateTime'>
+  readonly accountNumberFull: Prisma.FieldRef<"Account", 'String'>
+  readonly cardBrand: Prisma.FieldRef<"Account", 'CardBrand'>
+  readonly cardLifecycle: Prisma.FieldRef<"Account", 'CardLifecycleStatus'>
+  readonly panFull: Prisma.FieldRef<"Account", 'String'>
+  readonly cvv: Prisma.FieldRef<"Account", 'String'>
+  readonly expMonth: Prisma.FieldRef<"Account", 'Int'>
+  readonly expYear: Prisma.FieldRef<"Account", 'Int'>
+  readonly nameOnCard: Prisma.FieldRef<"Account", 'String'>
 }
     
 

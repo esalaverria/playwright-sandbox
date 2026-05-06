@@ -1,6 +1,6 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { CircularProgress, Stack } from '@mui/material';
+import { Box, Skeleton, Stack } from '@mui/material';
 import { api } from './api/client';
 import { AppLayout } from './layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
@@ -14,6 +14,8 @@ import { BillsPage } from './pages/BillsPage';
 import { StatementsPage } from './pages/StatementsPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { CardsPage } from './pages/CardsPage';
+import { AccountsPage } from './pages/AccountsPage';
+import { ActivityPage } from './pages/ActivityPage';
 
 function useSession() {
   return useQuery({
@@ -33,9 +35,21 @@ function ProtectedLayout() {
 
   if (isLoading) {
     return (
-      <Stack alignItems="center" justifyContent="center" minHeight="60vh">
-        <CircularProgress />
-      </Stack>
+      <Box
+        data-testid="session-loading"
+        sx={{
+          p: 4,
+          minHeight: '60vh',
+          background: (t) =>
+            `linear-gradient(120deg, ${t.palette.primary.light}33 0%, ${t.palette.secondary.light}22 100%)`,
+        }}
+      >
+        <Stack spacing={2} maxWidth={560} sx={{ mx: 'auto' }}>
+          <Skeleton variant="rounded" height={56} sx={{ borderRadius: 3 }} animation="wave" />
+          <Skeleton variant="rounded" height={120} sx={{ borderRadius: 3 }} animation="wave" />
+          <Skeleton variant="rounded" height={200} sx={{ borderRadius: 3 }} animation="wave" />
+        </Stack>
+      </Box>
     );
   }
 
@@ -58,7 +72,9 @@ export function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route element={<ProtectedLayout />}>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/accounts" element={<AccountsPage />} />
         <Route path="/accounts/:id" element={<AccountPage />} />
+        <Route path="/activity" element={<ActivityPage />} />
         <Route path="/transfer" element={<TransferPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/payees" element={<PayeesPage />} />

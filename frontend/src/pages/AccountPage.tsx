@@ -1,6 +1,7 @@
 import {
   Button,
   Paper,
+  Skeleton,
   Stack,
   Table,
   TableBody,
@@ -15,10 +16,12 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import { api, formatUsd } from '../api/client';
+import { api, delay, formatUsd } from '../api/client';
+import { usePrivacy } from '../privacy/PrivacyProvider';
 
 export function AccountPage() {
   const { id } = useParams();
+  const { formatMoney } = usePrivacy();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [q, setQ] = useState('');
@@ -29,9 +32,16 @@ export function AccountPage() {
   const acc = useQuery({
     queryKey: ['account-meta', id],
     queryFn: async () => {
-      const { data } = await api.get<{ accounts: { id: string; nickname: string; mask: string }[] }>(
-        '/accounts',
-      );
+      await delay(300 + Math.floor(Math.random() * 250));
+      const { data } = await api.get<{
+        accounts: {
+          id: string;
+          nickname: string;
+          mask: string;
+          type: string;
+          balanceCents: number;
+        }[];
+      }>('/accounts');
       return data.accounts.find((a) => a.id === id);
     },
     enabled: !!id,
@@ -42,6 +52,7 @@ export function AccountPage() {
   const txs = useQuery({
     queryKey: ['tx', id, page, pageSize, filterKey],
     queryFn: async () => {
+      await delay(400 + Math.floor(Math.random() * 350));
       const { data } = await api.get<{
         items: {
           id: string;
@@ -69,19 +80,26 @@ export function AccountPage() {
   });
 
   const total = txs.data?.total ?? 0;
+  const loading = txs.isFetching || acc.isFetching;
+  const ready = !loading && txs.data !== undefined && acc.data !== undefined;
 
   return (
     <Stack spacing={2}>
       <div>
-        <Typography variant="h4" fontWeight={700}>
-          {acc.data?.nickname ?? 'Account'}
+        <Typography variant="h4" fontWeight={800}>
+          {acc.data?.nickname ?? (acc.isFetching ? <Skeleton width={180} /> : 'Account')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {acc.data?.mask}
         </Typography>
+        {acc.data ? (
+          <Typography variant="subtitle2" sx={{ mt: 1 }}>
+            Balance: {formatMoney(acc.data.balanceCents)}
+          </Typography>
+        ) : null}
       </div>
 
-      <Paper sx={{ p: 2 }}>
+      <Paper sx={{ p: 2, borderRadius: 3 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} flexWrap="wrap" alignItems="flex-end">
           <TextField
             label="Search description"
@@ -138,9 +156,9 @@ export function AccountPage() {
         </Stack>
       </Paper>
 
-      <Paper>
-        <Table size="small">
-          <TableHead>
+      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+        <Table size="small" data-testid={ready ? 'transactions-ready' : undefined} aria-busy={loading}>
+          <TableHead sx={{ bgcolor: 'action.hover' }}>
             <TableRow>
               <TableCell>When</TableCell>
               <TableCell>Description</TableCell>
@@ -149,14 +167,22 @@ export function AccountPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {(txs.data?.items ?? []).map((r) => (
-              <TableRow key={r.id}>
-                <TableCell>{new Date(r.occurredAt).toLocaleString()}</TableCell>
-                <TableCell>{r.description}</TableCell>
-                <TableCell align="right">{formatUsd(r.amountCents)}</TableCell>
-                <TableCell align="right">{formatUsd(r.balanceAfterCents)}</TableCell>
-              </TableRow>
-            ))}
+            {loading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={4}>
+                      <Skeleton variant="rounded" height={36} animation="wave" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              : (txs.data?.items ?? []).map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell>{new Date(r.occurredAt).toLocaleString()}</TableCell>
+                    <TableCell>{r.description}</TableCell>
+                    <TableCell align="right">{formatUsd(r.amountCents)}</TableCell>
+                    <TableCell align="right">{formatMoney(r.balanceAfterCents)}</TableCell>
+                  </TableRow>
+                ))}
           </TableBody>
           <TableFooter>
             <TableRow>

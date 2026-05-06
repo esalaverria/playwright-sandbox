@@ -11,6 +11,7 @@ import { LineChart } from '@mui/x-charts/LineChart';
 import { useQuery } from '@tanstack/react-query';
 import { Link as RouterLink } from 'react-router-dom';
 import { api, formatUsd } from '../api/client';
+import { usePrivacy } from '../privacy/PrivacyProvider';
 
 type Account = {
   id: string;
@@ -21,6 +22,7 @@ type Account = {
 };
 
 export function DashboardPage() {
+  const { formatMoney } = usePrivacy();
   const now = new Date();
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth() + 1;
@@ -117,7 +119,7 @@ export function DashboardPage() {
                 </Typography>
                 <Typography variant="h6">{a.nickname}</Typography>
                 <Typography variant="h5" fontWeight={700} sx={{ mt: 1 }}>
-                  {formatUsd(a.balanceCents)}
+                  {formatMoney(a.balanceCents)}
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 1 }} color="primary">
                   View activity →

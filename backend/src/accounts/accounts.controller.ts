@@ -4,13 +4,15 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Query,
   Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { IsBoolean } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import { AccountType, CardBrand, CardLifecycleStatus as CLS } from '../generated/prisma/enums';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AccountsService } from './accounts.service';
 
@@ -24,15 +26,78 @@ class AllowOverLimitDto {
   allowOverLimit!: boolean;
 }
 
+class CreateAccountDto {
+  @IsIn([AccountType.CHECKING, AccountType.SAVINGS])
+  type!: AccountType;
+
+  @IsString()
+  @MinLength(1)
+  nickname!: string;
+}
+
+class RequestCardDto {
+  @IsOptional()
+  @IsString()
+  nickname?: string;
+
+  @IsOptional()
+  @IsEnum(CardBrand)
+  brand?: CardBrand;
+}
+
+class CloseAccountDto {
+  @IsOptional()
+  @IsString()
+  transferToAccountId?: string;
+}
+
+class CardLifecycleBodyDto {
+  @IsIn([CLS.CANCELLED, CLS.LOST_REPORTED])
+  lifecycle!: typeof CLS.CANCELLED | typeof CLS.LOST_REPORTED;
+}
+
 @Controller('accounts')
 @UseGuards(JwtAuthGuard)
 export class AccountsController {
   constructor(private accounts: AccountsService) {}
 
+  @Post()
+  async create(
+    @Req() req: Request & { user: { userId: string } },
+    @Body() dto: CreateAccountDto,
+  ) {
+    const account = await this.accounts.createDepositAccount(req.user.userId, dto);
+    return { account };
+  }
+
+  @Post('credit-cards')
+  async requestCard(
+    @Req() req: Request & { user: { userId: string } },
+    @Body() dto: RequestCardDto,
+  ) {
+    const account = await this.accounts.requestCreditCard(req.user.userId, dto);
+    return { account };
+  }
+
+  @Get('activity-log')
+  async activityLog(@Req() req: Request & { user: { userId: string } }) {
+    const items = await this.accounts.listActivity(req.user.userId);
+    return { activities: items };
+  }
+
   @Get()
   async list(@Req() req: Request & { user: { userId: string } }) {
     const items = await this.accounts.listForUser(req.user.userId);
     return { accounts: items };
+  }
+
+  @Get(':id/sensitive-card')
+  async sensitiveCard(
+    @Req() req: Request & { user: { userId: string } },
+    @Param('id') id: string,
+  ) {
+    const details = await this.accounts.getSensitiveCardDetails(req.user.userId, id);
+    return { details };
   }
 
   @Get(':id/transactions')
@@ -75,6 +140,24 @@ export class AccountsController {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     return res.send(content);
+  }
+
+  @Patch(':id/close')
+  async close(
+    @Req() req: Request & { user: { userId: string } },
+    @Param('id') id: string,
+    @Body() dto: CloseAccountDto,
+  ) {
+    return this.accounts.closeDepositAccount(req.user.userId, id, dto.transferToAccountId);
+  }
+
+  @Patch(':id/card-lifecycle')
+  async cardLifecycle(
+    @Req() req: Request & { user: { userId: string } },
+    @Param('id') id: string,
+    @Body() dto: CardLifecycleBodyDto,
+  ) {
+    return this.accounts.setCardLifecycle(req.user.userId, id, dto.lifecycle);
   }
 
   @Patch(':id/freeze')

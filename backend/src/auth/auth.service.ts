@@ -8,7 +8,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
-import { AccountType } from '../generated/prisma/client';
+import { generateAccountNumber } from '../accounts/card-utils';
+import { AccountType } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from './jwt.strategy';
 
@@ -53,6 +54,7 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(data.password, 10);
+    const acctNum = generateAccountNumber();
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -63,7 +65,8 @@ export class AuthService {
           create: {
             type: AccountType.CHECKING,
             nickname: 'Primary checking',
-            mask: '••0001',
+            mask: `••${acctNum.slice(-4)}`,
+            accountNumberFull: acctNum,
             balanceCents: 10000,
           },
         },

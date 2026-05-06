@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Button,
   MenuItem,
@@ -11,13 +10,20 @@ import {
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { api, formatUsd } from '../api/client';
+import { api } from '../api/client';
+import { usePrivacy } from '../privacy/PrivacyProvider';
+import { useToast } from '../notifications/ToastProvider';
+import { CurrencyTextField } from '../ui/CurrencyTextField';
 
 type Account = { id: string; nickname: string; mask: string; type: string; balanceCents: number };
 
 export function TransferPage() {
   const qc = useQueryClient();
+  const toast = useToast();
+  const { formatMoney } = usePrivacy();
   const [tab, setTab] = useState(0);
+  const [intAmount, setIntAmount] = useState('');
+  const [peerAmount, setPeerAmount] = useState('');
 
   const { data: accounts } = useQuery({
     queryKey: ['accounts'],
@@ -31,10 +37,14 @@ export function TransferPage() {
     mutationFn: async (payload: { fromAccountId: string; toAccountId: string; amountCents: number; memo?: string }) =>
       api.post('/transfers/internal', payload),
     onSuccess: async () => {
+      toast('Transfer posted!');
+      setIntAmount('');
       await qc.invalidateQueries({ queryKey: ['accounts'] });
       await qc.invalidateQueries({ queryKey: ['tx'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-month'] });
+      await qc.invalidateQueries({ queryKey: ['activity-log'] });
     },
+    onError: () => toast('Transfer failed.', 'error'),
   });
 
   const peer = useMutation({
@@ -46,10 +56,14 @@ export function TransferPage() {
       memo?: string;
     }) => api.post('/transfers/peer', payload),
     onSuccess: async () => {
+      toast('Sent.');
+      setPeerAmount('');
       await qc.invalidateQueries({ queryKey: ['accounts'] });
       await qc.invalidateQueries({ queryKey: ['tx'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-month'] });
+      await qc.invalidateQueries({ queryKey: ['activity-log'] });
     },
+    onError: () => toast('Peer transfer failed.', 'error'),
   });
 
   const [peerEmail, setPeerEmail] = useState('bob@example.com');
@@ -75,7 +89,7 @@ export function TransferPage() {
 
   return (
     <Stack spacing={3}>
-      <Typography variant="h4" fontWeight={700}>
+      <Typography variant="h4" fontWeight={800}>
         Transfer
       </Typography>
       <Tabs value={tab} onChange={(_, v) => setTab(v)}>
@@ -84,29 +98,29 @@ export function TransferPage() {
       </Tabs>
 
       {tab === 0 ? (
-        <Box component="form"
+        <Box
+          component="form"
           data-transfer-kind="internal"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
+            const amt = Number(intAmount);
             internal.mutate({
               fromAccountId: String(fd.get('from')),
               toAccountId: String(fd.get('to')),
-              amountCents: Math.round(Number(fd.get('amount')) * 100),
+              amountCents: Math.round(amt * 100),
               memo: String(fd.get('memo') ?? '') || undefined,
             });
           }}
         >
           <Stack spacing={2} maxWidth={480}>
-            {internal.isError ? <Alert severity="error">Could not complete transfer</Alert> : null}
-            {internal.isSuccess ? <Alert severity="success">Transfer posted.</Alert> : null}
             <TextField select name="from" label="From" required defaultValue="">
               <MenuItem value="" disabled>
                 Select account
               </MenuItem>
               {(accounts ?? []).map((a) => (
                 <MenuItem key={a.id} value={a.id}>
-                  {a.nickname} ({formatUsd(a.balanceCents)})
+                  {a.nickname} ({formatMoney(a.balanceCents)})
                 </MenuItem>
               ))}
             </TextField>
@@ -120,7 +134,14 @@ export function TransferPage() {
                 </MenuItem>
               ))}
             </TextField>
-            <TextField name="amount" label="Amount (USD)" type="number" inputProps={{ step: '0.01', min: 0 }} required />
+            <CurrencyTextField
+              name="amount"
+              label="Amount"
+              value={intAmount}
+              onChangeValue={setIntAmount}
+              required
+              inputProps={{ min: 0 }}
+            />
             <TextField name="memo" label="Memo" />
             <Button type="submit" variant="contained" disabled={internal.isPending}>
               Submit internal transfer
@@ -134,18 +155,17 @@ export function TransferPage() {
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
+            const amt = Number(peerAmount);
             peer.mutate({
               fromAccountId: String(fd.get('from')),
               recipientEmail: peerEmail.trim(),
               toAccountId: peerTo,
-              amountCents: Math.round(Number(fd.get('amount')) * 100),
+              amountCents: Math.round(amt * 100),
               memo: String(fd.get('memo') ?? '') || undefined,
             });
           }}
         >
           <Stack spacing={2} maxWidth={480}>
-            {peer.isError ? <Alert severity="error">Peer transfer failed</Alert> : null}
-            {peer.isSuccess ? <Alert severity="success">Sent.</Alert> : null}
             <TextField
               label="Recipient email"
               value={peerEmail}
@@ -158,7 +178,7 @@ export function TransferPage() {
               </MenuItem>
               {(accounts ?? []).map((a) => (
                 <MenuItem key={a.id} value={a.id}>
-                  {a.nickname} ({formatUsd(a.balanceCents)})
+                  {a.nickname} ({formatMoney(a.balanceCents)})
                 </MenuItem>
               ))}
             </TextField>
@@ -174,7 +194,13 @@ export function TransferPage() {
                 Enter an email that belongs to another NorthPeak user.
               </Typography>
             ) : null}
-            <TextField name="amount" label="Amount (USD)" type="number" inputProps={{ step: '0.01', min: 0 }} required />
+            <CurrencyTextField
+              label="Amount"
+              value={peerAmount}
+              onChangeValue={setPeerAmount}
+              required
+              inputProps={{ min: 0 }}
+            />
             <TextField name="memo" label="Memo" />
             <Button type="submit" variant="contained" disabled={peer.isPending || !peerTo}>
               Send money

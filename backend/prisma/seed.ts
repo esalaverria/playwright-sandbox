@@ -8,6 +8,13 @@ import {
   PaymentStatus,
   type Account,
 } from '../src/generated/prisma/client';
+import { CardBrand, CardLifecycleStatus as CLS } from '../src/generated/prisma/enums';
+import {
+  generateAccountNumber,
+  generateCvv,
+  generatePan,
+  maskFromPan,
+} from '../src/accounts/card-utils';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -26,10 +33,15 @@ async function main() {
   await prisma.scheduledPayment.deleteMany();
   await prisma.payee.deleteMany();
   await prisma.message.deleteMany();
+  await prisma.userActivity.deleteMany();
   await prisma.account.deleteMany();
   await prisma.user.deleteMany();
 
   const hash = await bcrypt.hash(PASSWORD, 10);
+
+  const aliceCreditPan = generatePan(CardBrand.VISA);
+  const bobCreditPan = generatePan(CardBrand.MASTERCARD);
+  const eveCreditPan = generatePan(CardBrand.VISA);
 
   const alice = await prisma.user.create({
     data: {
@@ -44,18 +56,28 @@ async function main() {
             type: AccountType.CHECKING,
             nickname: 'River checking',
             mask: '••8721',
+            accountNumberFull: generateAccountNumber(),
             balanceCents: 0,
           },
           {
             type: AccountType.SAVINGS,
             nickname: 'Growth savings',
             mask: '••0914',
+            accountNumberFull: generateAccountNumber(),
             balanceCents: 100000,
           },
           {
             type: AccountType.CREDIT,
             nickname: 'Travel rewards',
-            mask: '••4410',
+            mask: maskFromPan(aliceCreditPan),
+            accountNumberFull: null,
+            panFull: aliceCreditPan,
+            cvv: generateCvv(),
+            expMonth: 5,
+            expYear: 2029,
+            nameOnCard: 'ALICE PRIMARY',
+            cardBrand: CardBrand.VISA,
+            cardLifecycle: CLS.ACTIVE,
             balanceCents: 0,
             creditLimitCents: 500000,
             allowOverLimit: false,
@@ -79,18 +101,27 @@ async function main() {
             type: AccountType.CHECKING,
             nickname: 'Checking',
             mask: '••2100',
+            accountNumberFull: generateAccountNumber(),
             balanceCents: 0,
           },
           {
             type: AccountType.SAVINGS,
             nickname: 'Savings',
             mask: '••2101',
+            accountNumberFull: generateAccountNumber(),
             balanceCents: 50000,
           },
           {
             type: AccountType.CREDIT,
             nickname: 'Starter card',
-            mask: '••2102',
+            mask: maskFromPan(bobCreditPan),
+            panFull: bobCreditPan,
+            cvv: generateCvv(),
+            expMonth: 8,
+            expYear: 2028,
+            nameOnCard: 'BOB THIN',
+            cardBrand: CardBrand.MASTERCARD,
+            cardLifecycle: CLS.ACTIVE,
             balanceCents: 0,
             creditLimitCents: 100000,
             allowOverLimit: false,
@@ -113,6 +144,7 @@ async function main() {
           type: AccountType.CHECKING,
           nickname: 'Checking',
           mask: '••3300',
+          accountNumberFull: generateAccountNumber(),
           balanceCents: 100000,
         },
       },
@@ -130,6 +162,7 @@ async function main() {
           type: AccountType.CHECKING,
           nickname: 'Checking',
           mask: '••4400',
+          accountNumberFull: generateAccountNumber(),
           balanceCents: 0,
         },
       },
@@ -149,12 +182,20 @@ async function main() {
             type: AccountType.CHECKING,
             nickname: 'Checking',
             mask: '••5500',
+            accountNumberFull: generateAccountNumber(),
             balanceCents: 0,
           },
           {
             type: AccountType.CREDIT,
             nickname: 'Business card',
-            mask: '••5501',
+            mask: maskFromPan(eveCreditPan),
+            panFull: eveCreditPan,
+            cvv: generateCvv(),
+            expMonth: 11,
+            expYear: 2027,
+            nameOnCard: 'EVE DUPLICATE',
+            cardBrand: CardBrand.VISA,
+            cardLifecycle: CLS.ACTIVE,
             balanceCents: 0,
             creditLimitCents: 250000,
             allowOverLimit: false,

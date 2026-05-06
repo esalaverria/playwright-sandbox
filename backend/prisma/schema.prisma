@@ -24,19 +24,31 @@ enum PaymentStatus {
   FAILED
 }
 
+enum CardBrand {
+  VISA
+  MASTERCARD
+}
+
+enum CardLifecycleStatus {
+  ACTIVE
+  CANCELLED
+  LOST_REPORTED
+}
+
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  passwordHash   String
-  fullName       String
-  phone          String?
-  locked         Boolean  @default(false)
-  emailVerified  Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  accounts       Account[]
-  payees         Payee[]
-  scheduledPayments ScheduledPayment[]
-  messages       Message[]
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  passwordHash        String
+  fullName            String
+  phone               String?
+  locked              Boolean  @default(false)
+  emailVerified       Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  accounts            Account[]
+  payees              Payee[]
+  scheduledPayments   ScheduledPayment[]
+  messages            Message[]
+  activities          UserActivity[]
 }
 
 model Account {
@@ -49,11 +61,20 @@ model Account {
   currency           String     @default("USD")
   balanceCents       Int        @default(0)
   frozen             Boolean    @default(false)
-  /// Max debt in cents for CREDIT (positive cap). Ignored for non-credit accounts.
   creditLimitCents   Int?
-  /// When false, charges/cash advances cannot push debt above creditLimitCents.
   allowOverLimit     Boolean    @default(false)
   createdAt          DateTime   @default(now())
+  /// Soft-close: account excluded from normal lists when set.
+  closedAt           DateTime?
+  /// Fake full account number for deposit accounts (UI reveal).
+  accountNumberFull  String?
+  cardBrand          CardBrand?
+  cardLifecycle      CardLifecycleStatus @default(ACTIVE)
+  panFull            String?
+  cvv                String?
+  expMonth           Int?
+  expYear            Int?
+  nameOnCard         String?
   ledgerEntries      LedgerEntry[]
   scheduledPaymentsFrom ScheduledPayment[]
 }
@@ -100,4 +121,15 @@ model Message {
   body      String
   readAt    DateTime?
   createdAt DateTime  @default(now())
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }

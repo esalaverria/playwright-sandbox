@@ -1,3 +1,4 @@
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import PersonIcon from '@mui/icons-material/Person';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -7,6 +8,9 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import PeopleIcon from '@mui/icons-material/People';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import {
   AppBar,
   Box,
@@ -24,11 +28,14 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link as RouterLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
+import { usePrivacy } from '../privacy/PrivacyProvider';
 
 const drawerWidth = 260;
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: <DashboardIcon /> },
+  { to: '/accounts', label: 'Accounts', icon: <AccountBalanceWalletIcon /> },
+  { to: '/activity', label: 'Activity', icon: <TimelineIcon /> },
   { to: '/transfer', label: 'Transfer', icon: <SwapHorizIcon /> },
   { to: '/payees', label: 'Payees', icon: <PeopleIcon /> },
   { to: '/bills', label: 'Bill pay', icon: <PaymentIcon /> },
@@ -48,6 +55,7 @@ export function AppLayout({
   const location = useLocation();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { hideBalances, toggleHideBalances } = usePrivacy();
 
   const { data: unread } = useQuery({
     queryKey: ['messages-unread'],
@@ -67,13 +75,20 @@ export function AppLayout({
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar
         position="fixed"
-        sx={{ zIndex: (t) => t.zIndex.drawer + 1, bgcolor: 'primary.dark' }}
+        sx={{
+          zIndex: (t) => t.zIndex.drawer + 1,
+          background: (t) =>
+            `linear-gradient(90deg, ${t.palette.primary.dark} 0%, ${t.palette.secondary.dark} 120%)`,
+        }}
         elevation={0}
       >
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
             NorthPeak
           </Typography>
+          <IconButton color="inherit" onClick={toggleHideBalances} aria-label="toggle balance privacy">
+            {hideBalances ? <VisibilityOffIcon /> : <VisibilityIcon />}
+          </IconButton>
           <Typography variant="body2" sx={{ mr: 2, opacity: 0.9 }}>
             {user.fullName}
           </Typography>
@@ -101,7 +116,11 @@ export function AppLayout({
                 key={item.to}
                 component={RouterLink}
                 to={item.to}
-                selected={location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))}
+                selected={
+                  location.pathname === item.to ||
+                  (item.to !== '/' && item.to !== '/accounts' && location.pathname.startsWith(item.to)) ||
+                  (item.to === '/accounts' && location.pathname.startsWith('/accounts'))
+                }
               >
                 <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} />

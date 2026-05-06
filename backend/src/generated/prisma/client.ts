@@ -69,3 +69,8 @@ export type ScheduledPayment = Prisma.ScheduledPaymentModel
  * 
  */
 export type Message = Prisma.MessageModel
+/**
+ * Model UserActivity
+ * 
+ */
+export type UserActivity = Prisma.UserActivityModel

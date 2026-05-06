@@ -1,9 +1,12 @@
 import { Alert, Button, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { api } from '../api/client';
+import { CurrencyTextField } from '../ui/CurrencyTextField';
 
 export function BillsPage() {
   const qc = useQueryClient();
+  const [billAmount, setBillAmount] = useState('');
   const accounts = useQuery({
     queryKey: ['accounts'],
     queryFn: async () => {
@@ -37,7 +40,10 @@ export function BillsPage() {
       dueDate: string;
       memo?: string;
     }) => api.post('/bill-payments', payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['bills'] }),
+    onSuccess: () => {
+      setBillAmount('');
+      qc.invalidateQueries({ queryKey: ['bills'] });
+    },
   });
 
   const payNow = useMutation({
@@ -64,7 +70,7 @@ export function BillsPage() {
             create.mutate({
               billerName: String(fd.get('billerName') ?? ''),
               fromAccountId: String(fd.get('fromAccountId') ?? ''),
-              amountCents: Math.round(Number(fd.get('amount')) * 100),
+              amountCents: Math.round(Number(billAmount) * 100),
               dueDate: String(fd.get('dueDate') ?? ''),
               memo: String(fd.get('memo') ?? '') || undefined,
             });
@@ -81,7 +87,7 @@ export function BillsPage() {
               </MenuItem>
             ))}
           </TextField>
-          <TextField name="amount" label="Amount (USD)" type="number" required inputProps={{ min: 0, step: '0.01' }} />
+          <CurrencyTextField label="Amount" value={billAmount} onChangeValue={setBillAmount} required inputProps={{ min: 0 }} />
           <TextField name="dueDate" label="Due date" type="date" InputLabelProps={{ shrink: true }} required />
           <TextField name="memo" label="Memo" />
           <Button type="submit" variant="contained">

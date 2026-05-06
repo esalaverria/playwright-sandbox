@@ -33,3 +33,20 @@ export const PaymentStatus = {
 } as const
 
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
+
+
+export const CardBrand = {
+  VISA: 'VISA',
+  MASTERCARD: 'MASTERCARD'
+} as const
+
+export type CardBrand = (typeof CardBrand)[keyof typeof CardBrand]
+
+
+export const CardLifecycleStatus = {
+  ACTIVE: 'ACTIVE',
+  CANCELLED: 'CANCELLED',
+  LOST_REPORTED: 'LOST_REPORTED'
+} as const
+
+export type CardLifecycleStatus = (typeof CardLifecycleStatus)[keyof typeof CardLifecycleStatus]

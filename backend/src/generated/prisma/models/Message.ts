@@ -381,10 +381,6 @@ export type MessageUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.MessageScalarWhereInput | Prisma.MessageScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type MessageCreateWithoutUserInput = {
   id?: string
   subject: string

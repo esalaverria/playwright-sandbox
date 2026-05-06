@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AccountType, LedgerStatus } from '../generated/prisma/client';
+import { CardLifecycleStatus } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 
 type CreditCapAccount = {
@@ -51,6 +52,17 @@ export class TransfersService {
       const from = await tx.account.findFirst({ where: { id: body.fromAccountId, userId } });
       const to = await tx.account.findFirst({ where: { id: body.toAccountId, userId } });
       if (!from || !to) throw new ForbiddenException('Accounts must belong to you');
+      if (from.closedAt || to.closedAt) {
+        throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Account is closed' });
+      }
+      if (from.type === AccountType.CREDIT) {
+        if (from.cardLifecycle !== CardLifecycleStatus.ACTIVE) {
+          throw new BadRequestException({ code: 'CARD_INACTIVE', message: 'Card is no longer active' });
+        }
+        if (from.frozen) {
+          throw new BadRequestException({ code: 'CARD_FROZEN', message: 'Card is frozen' });
+        }
+      }
       if (
         (from.type === AccountType.CHECKING || from.type === AccountType.SAVINGS) &&
         from.balanceCents < body.amountCents
@@ -100,8 +112,14 @@ export class TransfersService {
     if (!credit || credit.type !== AccountType.CREDIT) {
       throw new BadRequestException({ code: 'NOT_CREDIT', message: 'Destination must be a credit card account' });
     }
+    if (credit.closedAt) {
+      throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Account is closed' });
+    }
     const from = await this.prisma.account.findFirst({ where: { id: fromAccountId, userId } });
     if (!from) throw new NotFoundException('Source account not found');
+    if (from.closedAt) {
+      throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Account is closed' });
+    }
     if (from.type !== AccountType.CHECKING && from.type !== AccountType.SAVINGS) {
       throw new BadRequestException({ code: 'INVALID_PAY_FROM', message: 'Pay from a checking or savings account' });
     }
@@ -138,12 +156,29 @@ export class TransfersService {
       where: { id: body.toAccountId, userId: recipient.id },
     });
     if (!toAcc) throw new NotFoundException({ code: 'UNKNOWN_ACCOUNT', message: 'Destination account not found for recipient' });
+    if (toAcc.closedAt) {
+      throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Destination account is closed' });
+    }
+    if (toAcc.type === AccountType.CREDIT && toAcc.cardLifecycle !== CardLifecycleStatus.ACTIVE) {
+      throw new BadRequestException({ code: 'CARD_INACTIVE', message: 'Cannot send to this card' });
+    }
 
     const sender = await this.prisma.user.findUnique({ where: { id: userId } });
 
     return this.prisma.$transaction(async (tx) => {
       const from = await tx.account.findFirst({ where: { id: body.fromAccountId, userId } });
       if (!from) throw new ForbiddenException('Source account not found');
+      if (from.closedAt) {
+        throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Account is closed' });
+      }
+      if (from.type === AccountType.CREDIT) {
+        if (from.cardLifecycle !== CardLifecycleStatus.ACTIVE) {
+          throw new BadRequestException({ code: 'CARD_INACTIVE', message: 'Card is no longer active' });
+        }
+        if (from.frozen) {
+          throw new BadRequestException({ code: 'CARD_FROZEN', message: 'Card is frozen' });
+        }
+      }
       if (
         (from.type === AccountType.CHECKING || from.type === AccountType.SAVINGS) &&
         from.balanceCents < body.amountCents
