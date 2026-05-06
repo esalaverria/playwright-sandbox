@@ -10,6 +10,14 @@ import { formatAccountOptionLabel, formatPeerDestinationLabel } from '../ui/acco
 
 type TransferTabKey = 'internal' | 'peer';
 
+function apiErrorMessage(err: unknown, fallback: string): string {
+  const e = err as { response?: { data?: { message?: string | string[] } } };
+  const m = e.response?.data?.message;
+  if (Array.isArray(m)) return m[0] ?? fallback;
+  if (typeof m === 'string') return m;
+  return fallback;
+}
+
 type Account = {
   id: string;
   nickname: string;
@@ -87,7 +95,7 @@ export function TransferPage() {
       await qc.invalidateQueries({ queryKey: ['activity-log'] });
       await qc.invalidateQueries({ queryKey: ['messages-unread'] });
     },
-    onError: () => toast('Transfer failed.', 'error'),
+    onError: (e) => toast(apiErrorMessage(e, 'Transfer failed.'), 'error'),
   });
 
   const peer = useMutation({
@@ -107,10 +115,10 @@ export function TransferPage() {
       await qc.invalidateQueries({ queryKey: ['activity-log'] });
       await qc.invalidateQueries({ queryKey: ['messages-unread'] });
     },
-    onError: () => toast('Peer transfer failed.', 'error'),
+    onError: (e) => toast(apiErrorMessage(e, 'Peer transfer failed.'), 'error'),
   });
 
-  const [peerEmail, setPeerEmail] = useState('bob@example.com');
+  const [peerEmail, setPeerEmail] = useState('');
   const preview = useQuery({
     queryKey: ['preview', peerEmail],
     queryFn: async () => {

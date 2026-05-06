@@ -177,7 +177,7 @@ export function CardsPage() {
       await qc.invalidateQueries({ queryKey: ['activity-log'] });
       await qc.invalidateQueries({ queryKey: ['messages-unread'] });
     },
-    onError: () => toast('Payment failed — check funds or card status.', 'error'),
+    onError: (e) => toast(apiErrorMessage(e, 'Payment failed — check funds or card status.'), 'error'),
   });
 
   const cancelCard = useMutation({
@@ -286,6 +286,11 @@ export function CardsPage() {
                     >
                       <Chip.Label>{c.cardLifecycle.replace(/_/g, ' ')}</Chip.Label>
                     </Chip>
+                    {c.frozen ? (
+                      <Chip variant="soft" color="warning" size="sm">
+                        <Chip.Label>Frozen</Chip.Label>
+                      </Chip>
+                    ) : null}
                   </div>
                 </div>
               </div>

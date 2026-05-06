@@ -30,6 +30,30 @@ type BillWithFrom = Prisma.ScheduledPaymentGetPayload<{
 export class BillsService {
   constructor(private prisma: PrismaService) {}
 
+  private getPayFromCapacityIssue(
+    account: {
+      type: string;
+      balanceCents: number;
+      creditLimitCents?: number | null;
+      allowOverLimit?: boolean;
+    },
+    amountCents: number,
+  ): 'INSUFFICIENT_FUNDS' | 'OVER_CREDIT_LIMIT' | null {
+    if (account.balanceCents >= amountCents) return null;
+    if (account.type !== AccountType.CREDIT) {
+      return 'INSUFFICIENT_FUNDS';
+    }
+    const nextDebt = Math.max(0, -(account.balanceCents - amountCents));
+    if (
+      account.creditLimitCents != null &&
+      nextDebt > account.creditLimitCents &&
+      !account.allowOverLimit
+    ) {
+      return 'OVER_CREDIT_LIMIT';
+    }
+    return null;
+  }
+
   private assertPayFromHasCapacity(
     account: {
       type: string;
@@ -39,16 +63,11 @@ export class BillsService {
     },
     amountCents: number,
   ) {
-    if (account.balanceCents >= amountCents) return;
-    if (account.type !== AccountType.CREDIT) {
+    const issue = this.getPayFromCapacityIssue(account, amountCents);
+    if (issue === 'INSUFFICIENT_FUNDS') {
       throw new BadRequestException({ code: 'INSUFFICIENT_FUNDS', message: 'Insufficient funds' });
     }
-    const nextDebt = Math.max(0, -(account.balanceCents - amountCents));
-    if (
-      account.creditLimitCents != null &&
-      nextDebt > account.creditLimitCents &&
-      !account.allowOverLimit
-    ) {
+    if (issue === 'OVER_CREDIT_LIMIT') {
       throw new BadRequestException({
         code: 'OVER_CREDIT_LIMIT',
         message: 'Insufficient available credit. Change the payment method.',
@@ -58,14 +77,17 @@ export class BillsService {
 
   private enrichBill(b: BillWithFrom) {
     const src = canUseAsDebitSourceForBanking(b.fromAccount);
-    const insufficient =
-      b.status === PaymentStatus.SCHEDULED && b.fromAccount.balanceCents < b.amountCents;
+    const capacityIssue =
+      b.status === PaymentStatus.SCHEDULED
+        ? this.getPayFromCapacityIssue(b.fromAccount, b.amountCents)
+        : null;
     const payFromInvalid =
-      b.status === PaymentStatus.SCHEDULED && (!src.ok || insufficient);
+      b.status === PaymentStatus.SCHEDULED && (!src.ok || capacityIssue !== null);
     let payFromIssue: string | undefined;
     if (b.status === PaymentStatus.SCHEDULED) {
       if (!src.ok) payFromIssue = src.reason;
-      else if (insufficient) payFromIssue = 'insufficient_funds';
+      else if (capacityIssue === 'INSUFFICIENT_FUNDS') payFromIssue = 'insufficient_funds';
+      else if (capacityIssue === 'OVER_CREDIT_LIMIT') payFromIssue = 'over_credit_limit';
     }
 
     return {
@@ -143,6 +165,7 @@ export class BillsService {
       if (due < today) {
         throw new BadRequestException({ code: 'PAST_DATE', message: 'Due date must be today or later' });
       }
+      this.assertPayFromHasCapacity(acc, dto.amountCents);
     }
 
     if (mode === 'pay_now') {

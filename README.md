@@ -1,4 +1,22 @@
-# NorthPeak — Playwright + full-stack banking demo
+# NorthPeak Sandbox — Playwright + full-stack banking demo 🧪✨
+
+<p align="center">
+  <strong>A friendly sandbox for learning automated testing tools & frameworks.</strong><br/>
+  This repo exists primarily so you can practice <strong>end‑to‑end testing</strong> on a realistic full‑stack app (React + NestJS + Postgres). 🎯
+</p>
+
+<p align="center">
+  <a href="https://playwright.dev/"><img alt="Playwright" src="https://img.shields.io/badge/Playwright-E2E%20testing-45ba4b?style=for-the-badge"/></a>
+  <a href="https://www.cypress.io/"><img alt="Cypress" src="https://img.shields.io/badge/Cypress-E2E%20testing-17202c?style=for-the-badge"/></a>
+  <a href="https://nestjs.com/"><img alt="NestJS" src="https://img.shields.io/badge/NestJS-API-e0234e?style=for-the-badge"/></a>
+  <a href="https://react.dev/"><img alt="React" src="https://img.shields.io/badge/React-frontend-149eca?style=for-the-badge"/></a>
+  <a href="https://www.prisma.io/"><img alt="Prisma" src="https://img.shields.io/badge/Prisma-ORM-2d3748?style=for-the-badge"/></a>
+  <a href="https://www.docker.com/"><img alt="Docker" src="https://img.shields.io/badge/Docker-compose-2496ed?style=for-the-badge"/></a>
+</p>
+
+> **Why this exists:** It’s much easier to learn test automation when the app has real workflows, state, and edge cases. This repo gives you that—without needing production infrastructure. 🙂
+
+---
 
 Monorepo layout:
 
@@ -13,6 +31,29 @@ Copy **`.env.example`** for local tooling env vars; Compose injects DB/JWT value
 **Feature snapshot:** Bill pay supports **scheduled** and **instant** payments with **payee-aware biller suggestions** and editable scheduled rows. **Transfers** keep strict account eligibility (deposit accounts only for transfer destination selection). **Cards** support primary-card marking, cancel confirmation with strict zero-balance requirement, and lost-card replacement that moves history. UI includes **breadcrumbs**, **toasts** (top-right), **payee edit/delete**, and closed-state sections for cards/accounts.
 
 ---
+
+## 🧭 Quick start (recommended)
+
+1) Start the full stack (API + UI + Postgres):
+
+```bash
+docker compose up --build
+```
+
+2) Open the app:
+- App UI: [http://localhost:3000](http://localhost:3000)
+
+3) Open API docs (Swagger / OpenAPI):
+- Swagger UI: [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
+- OpenAPI JSON: [http://localhost:4000/api/docs-json](http://localhost:4000/api/docs-json)
+
+4) Run tests:
+
+```bash
+npm run test:e2e:smoke
+```
+
+> Playwright is included here as a reference implementation, but this sandbox is intentionally useful for **any E2E framework** (Cypress, WebdriverIO, TestCafe, etc.). Pick the tool you want to learn and point it at `http://localhost:3000`. 🙂
 
 ## Docker: run the stack
 
@@ -159,6 +200,37 @@ Useful when iterating on selectors or page objects without rerunning the full CL
 Reusable locators and actions live under **`tests/page-objects/`**. **`LoginPage`** is the reference implementation; copy its structure for routes like transfer, payees, or bills.
 
 ---
+
+## 📮 Postman collection (API smoke)
+
+If you’d rather poke the API directly (or you’re building API tests), import the included Postman collection:
+
+- Collection: **`docs/postman/NorthPeak.postman_collection.json`**
+
+It contains a few small requests focusing on authentication + basic reads:
+- `GET /api/health`
+- `POST /api/auth/login` (cookie-based auth)
+- `GET /api/auth/me`
+- `GET /api/accounts`
+- `POST /api/auth/logout`
+  
+  **How to use**:
+1) Start the stack with `docker compose up --build`
+2) In Postman, import the collection JSON
+3) Set the `baseUrl` collection variable to `http://localhost:4000`
+4) Run `Login` first — Postman will store the `np_token` cookie automatically for subsequent requests
+
+## 🤖 Optional: LLM / MCP-friendly workflows
+
+If you’re using a modern IDE with LLM support (Cursor, VS Code extensions, etc.), this repo is intentionally structured to be “LLM-friendly”:
+
+- **`docs/PRODUCT.md`** is the source of truth for business rules.
+- Playwright tests are organized with **page objects** (`tests/page-objects/`) so an LLM can quickly map “intent → selectors → actions”.
+- The API exposes **OpenAPI** (Swagger) so tools can understand endpoints and payloads.
+
+If you have MCP tools available in your environment, OpenAPI plus the repo’s clear module structure makes it straightforward to connect an LLM to browse code, reason about flows, and generate/maintain tests.
+
+(If you don’t use MCP/LLMs, you can ignore this section—everything works normally.)
 
 ## Local dev without Docker (optional)
 

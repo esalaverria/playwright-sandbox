@@ -36,7 +36,7 @@ export function PageBreadcrumbs() {
     acc += `/${seg}`;
     const isLast = i === segments.length - 1;
     const label = looksLikeCuid(seg)
-      ? 'Account'
+      ? 'Transactions'
       : ROUTE_LABELS[seg] ?? seg.charAt(0).toUpperCase() + seg.slice(1);
     crumbs.push({ to: acc, label, last: isLast });
   });
