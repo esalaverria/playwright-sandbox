@@ -8,6 +8,12 @@ import { usePrivacy } from '../privacy/PrivacyProvider';
 import { CurrencyTextField } from '../ui/CurrencyTextField';
 import { AccountSelect } from '../ui/AccountSelect';
 import { formatAccountOptionLabel } from '../ui/account-option-label';
+import {
+  findMatchedPayeeForHint,
+  PayeeAutocomplete,
+  resolveBillerApiName,
+  type PayeeRow,
+} from '../ui/PayeeAutocomplete';
 import { UtcIsoDatePicker } from '../ui/UtcIsoDatePicker';
 
 type BillRow = {
@@ -124,22 +130,20 @@ export function BillsPage() {
   const payees = useQuery({
     queryKey: ['payees'],
     queryFn: async () => {
-      const { data } = await api.get<{
-        payees: { id: string; displayName: string; nickname: string | null; externalRef: string }[];
-      }>('/payees');
+      const { data } = await api.get<{ payees: PayeeRow[] }>('/payees');
       return data.payees;
     },
   });
   const [biller, setBiller] = useState('');
   const [payNowBiller, setPayNowBiller] = useState('');
-  const matchedPayee = (payees.data ?? []).find((p) => {
-    const t = biller.trim().toLowerCase();
-    return t && (p.displayName.toLowerCase() === t || (p.nickname ?? '').toLowerCase() === t);
-  });
-  const matchedPayeePayNow = (payees.data ?? []).find((p) => {
-    const t = payNowBiller.trim().toLowerCase();
-    return t && (p.displayName.toLowerCase() === t || (p.nickname ?? '').toLowerCase() === t);
-  });
+  const [schedulePayeeId, setSchedulePayeeId] = useState<string | null>(null);
+  const [payNowPayeeId, setPayNowPayeeId] = useState<string | null>(null);
+  const [editBiller, setEditBiller] = useState('');
+  const [editPayeeId, setEditPayeeId] = useState<string | null>(null);
+
+  const payeeList = payees.data ?? [];
+  const matchedPayee = findMatchedPayeeForHint(payeeList, schedulePayeeId, biller);
+  const matchedPayeePayNow = findMatchedPayeeForHint(payeeList, payNowPayeeId, payNowBiller);
 
   const bills = useQuery({
     queryKey: ['bills'],
@@ -153,11 +157,18 @@ export function BillsPage() {
 
   useEffect(() => {
     const row = (bills.data ?? []).find((b) => b.id === editId);
-    if (row) {
-      setEditFromAccountId(row.fromAccountId);
-      setEditDueIso(row.dueDate.slice(0, 10));
-    }
-  }, [editId, bills.data]);
+    if (!row) return;
+    setEditFromAccountId(row.fromAccountId);
+    setEditDueIso(row.dueDate.slice(0, 10));
+    setEditBiller(row.billerName);
+    const list = payees.data ?? [];
+    const hit = list.find(
+      (p) =>
+        p.displayName === row.billerName ||
+        (p.nickname != null && p.nickname !== '' && p.nickname === row.billerName),
+    );
+    setEditPayeeId(hit?.id ?? null);
+  }, [editId, bills.data, payees.data]);
 
   const create = useMutation({
     mutationFn: async (payload: {
@@ -171,6 +182,10 @@ export function BillsPage() {
     onSuccess: (_, variables) => {
       setBillAmount('');
       setPayNowAmount('');
+      setBiller('');
+      setPayNowBiller('');
+      setSchedulePayeeId(null);
+      setPayNowPayeeId(null);
       toast(variables.mode === 'pay_now' ? 'Payment sent.' : 'Payment scheduled.');
       qc.invalidateQueries({ queryKey: ['bills'] });
       qc.invalidateQueries({ queryKey: ['accounts'] });
@@ -249,7 +264,7 @@ export function BillsPage() {
                 const fd = new FormData(e.currentTarget);
                 if (!scheduleDueIso) return;
                 create.mutate({
-                  billerName: biller,
+                  billerName: resolveBillerApiName(payeeList, schedulePayeeId, biller),
                   fromAccountId: scheduleFromAccountId,
                   amountCents: Math.round(Number(billAmount) * 100),
                   dueDate: scheduleDueIso,
@@ -258,24 +273,16 @@ export function BillsPage() {
                 });
               }}
             >
-              <TextLike
-                name="billerName"
+              <PayeeAutocomplete
+                id="fld-billerName"
                 label="Biller"
-                required
-                value={biller}
-                onChange={(v) => setBiller(v)}
-                listId="payee-options-main"
+                isRequired
+                payees={payeeList}
+                selectedPayeeId={schedulePayeeId}
+                billerInput={biller}
+                onSelectedPayeeIdChange={setSchedulePayeeId}
+                onBillerInputChange={setBiller}
               />
-              <datalist id="payee-options-main">
-                {(payees.data ?? []).map((p) => (
-                  <option key={`main-${p.id}`} value={p.displayName} />
-                ))}
-                {(payees.data ?? [])
-                  .filter((p) => p.nickname)
-                  .map((p) => (
-                    <option key={`main-nick-${p.id}`} value={p.nickname ?? ''} />
-                  ))}
-              </datalist>
               {matchedPayee ? (
                 <p className="text-xs text-neutral-600">
                   Matched payee: {matchedPayee.displayName} · {matchedPayee.nickname ?? 'No nickname'} ·{' '}
@@ -316,7 +323,7 @@ export function BillsPage() {
                 const today = new Date();
                 const iso = today.toISOString().slice(0, 10);
                 create.mutate({
-                  billerName: payNowBiller,
+                  billerName: resolveBillerApiName(payeeList, payNowPayeeId, payNowBiller),
                   fromAccountId: payNowFromAccountId,
                   amountCents: Math.round(Number(payNowAmount) * 100),
                   dueDate: iso,
@@ -325,25 +332,16 @@ export function BillsPage() {
                 });
               }}
             >
-              <TextLike
-                idSuffix="pay"
-                name="pn_billerName"
+              <PayeeAutocomplete
+                id="fld-pn_billerName"
                 label="Biller"
-                required
-                value={payNowBiller}
-                onChange={(v) => setPayNowBiller(v)}
-                listId="payee-options-now"
+                isRequired
+                payees={payeeList}
+                selectedPayeeId={payNowPayeeId}
+                billerInput={payNowBiller}
+                onSelectedPayeeIdChange={setPayNowPayeeId}
+                onBillerInputChange={setPayNowBiller}
               />
-              <datalist id="payee-options-now">
-                {(payees.data ?? []).map((p) => (
-                  <option key={`now-${p.id}`} value={p.displayName} />
-                ))}
-                {(payees.data ?? [])
-                  .filter((p) => p.nickname)
-                  .map((p) => (
-                    <option key={`now-nick-${p.id}`} value={p.nickname ?? ''} />
-                  ))}
-              </datalist>
               {matchedPayeePayNow ? (
                 <p className="text-xs text-neutral-600">
                   Matched payee: {matchedPayeePayNow.displayName} · {matchedPayeePayNow.nickname ?? 'No nickname'} ·{' '}
@@ -459,7 +457,7 @@ export function BillsPage() {
                         const memoRaw = String(fd.get('memo') ?? '').trim();
                         patchBill.mutate({
                           id: editing.id,
-                          billerName: String(fd.get('billerName') ?? ''),
+                          billerName: resolveBillerApiName(payeeList, editPayeeId, editBiller),
                           fromAccountId: editFromAccountId,
                           amountCents: Math.round(Number(fd.get('amount') ?? 0) * 100),
                           dueDate: editDueIso,
@@ -468,18 +466,18 @@ export function BillsPage() {
                       }}
                     >
                       <Modal.Body className="flex flex-col gap-4">
-                        <div>
-                          <Label htmlFor="edit-biller" className="font-medium">
-                            Biller
-                          </Label>
-                          <Input
-                            id="edit-biller"
-                            name="billerName"
-                            required
-                            defaultValue={editing.billerName}
-                            className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                          />
-                        </div>
+                        <PayeeAutocomplete
+                          key={editing.id}
+                          id="edit-biller"
+                          name="billerName"
+                          label="Biller"
+                          isRequired
+                          payees={payeeList}
+                          selectedPayeeId={editPayeeId}
+                          billerInput={editBiller}
+                          onSelectedPayeeIdChange={setEditPayeeId}
+                          onBillerInputChange={setEditBiller}
+                        />
                         <AccountSelect
                           label="Pay from"
                           aria-label="Pay from"
@@ -544,35 +542,6 @@ export function BillsPage() {
           </Modal.Container>
         </Modal.Backdrop>
       </Modal>
-    </div>
-  );
-}
-
-function TextLike(props: {
-  idSuffix?: string;
-  name: string;
-  label: string;
-  required?: boolean;
-  value: string;
-  onChange: (value: string) => void;
-  listId?: string;
-}) {
-  const { idSuffix = '', name, label, required, value, onChange, listId } = props;
-  const id = `fld-${name}${idSuffix}`;
-  return (
-    <div>
-      <Label htmlFor={id} className="font-medium">
-        {label}
-      </Label>
-      <Input
-        id={id}
-        name={name}
-        list={listId}
-        required={required}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-      />
     </div>
   );
 }

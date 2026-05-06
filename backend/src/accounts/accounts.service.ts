@@ -370,12 +370,23 @@ export class AccountsService {
     if (acc.cardLifecycle !== CLS.ACTIVE) {
       throw new BadRequestException('Card is no longer active');
     }
-    const updated = await this.prisma.account.update({
-      where: { id: accountId },
-      data: { frozen },
-      select: { id: true, frozen: true },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.account.update({
+        where: { id: accountId },
+        data: { frozen },
+      });
+      if (frozen) {
+        await tx.user.updateMany({
+          where: { id: userId, primaryCardId: accountId },
+          data: { primaryCardId: null },
+        });
+      }
     });
     await this.logActivity(userId, frozen ? 'CARD_FROZEN' : 'CARD_UNFROZEN', { accountId });
+    const updated = await this.prisma.account.findUniqueOrThrow({
+      where: { id: accountId },
+      select: { id: true, frozen: true },
+    });
     return updated;
   }
 

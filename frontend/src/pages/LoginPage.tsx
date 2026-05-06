@@ -47,14 +47,14 @@ export function LoginPage() {
     (login.error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Login failed';
 
   return (
-    <div className="flex min-h-screen justify-center bg-[#f5f3ff] px-4 py-16">
-      <Card.Root className="max-w-md flex-1 p-8 shadow-lg">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f5f3ff] px-4 py-8">
+      <Card.Root className="mx-auto w-full max-w-md shrink-0 rounded-2xl p-6 shadow-lg md:p-8">
         <div className="mb-8">
-          <h1 className="text-foreground text-balance text-2xl font-extrabold tracking-tight">Sign in</h1>
-          <Description className="text-muted mt-2 text-sm">
-            Demo users share password <strong className="text-foreground font-semibold">Test123!</strong> — try{' '}
-            <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">alice@example.com</code> /{' '}
-            <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">bob@example.com</code>.
+          <h1 className="text-balance text-2xl font-extrabold tracking-tight text-neutral-900">Sign in</h1>
+          <Description className="mt-2 text-sm leading-relaxed text-neutral-600">
+            Demo users share password <strong className="font-semibold text-neutral-900">Test123!</strong> — try{' '}
+            <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs text-neutral-800">alice@example.com</code> /{' '}
+            <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs text-neutral-800">bob@example.com</code>.
           </Description>
         </div>
 
@@ -80,7 +80,7 @@ export function LoginPage() {
             {login.isPending ? 'Signing in…' : 'Sign in'}
           </Button>
 
-          <p className="text-muted text-center text-sm">
+          <p className="text-center text-sm text-neutral-600">
             No account?{' '}
             <RouterLink to="/register" className="font-semibold text-indigo-600 underline-offset-4 hover:underline">
               Create one

@@ -42,9 +42,11 @@ export function RegisterPage() {
   const errMsg = typeof errMsgRaw === 'string' ? errMsgRaw : Array.isArray(errMsgRaw) ? errMsgRaw[0] : 'Registration failed';
 
   return (
-    <div className="flex min-h-screen justify-center bg-[#f5f3ff] px-4 py-16">
-      <Card.Root className="max-w-md flex-1 p-8 shadow-lg">
-        <h1 className="text-foreground mb-8 text-balance text-2xl font-extrabold tracking-tight">Create account</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f5f3ff] px-4 py-8">
+      <Card.Root className="mx-auto w-full max-w-md shrink-0 rounded-2xl p-6 shadow-lg md:p-8">
+        <h1 className="mb-8 text-balance text-2xl font-extrabold tracking-tight text-neutral-900">
+          Create account
+        </h1>
 
         {reg.isError ? (
           <Alert.Root status="danger" role="alert" className="mb-6">
@@ -83,7 +85,7 @@ export function RegisterPage() {
             {reg.isPending ? 'Creating…' : 'Register'}
           </Button>
 
-          <Description className="text-center">
+          <Description className="text-center text-neutral-600">
             Already have an account?{' '}
             <RouterLink to="/login" className="font-semibold text-indigo-600 underline-offset-4 hover:underline">
               Sign in

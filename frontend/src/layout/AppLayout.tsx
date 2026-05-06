@@ -59,8 +59,9 @@ export function AppLayout({
 
   async function logout() {
     await api.post('/auth/logout');
+    qc.setQueryData(['me'], null);
     await qc.invalidateQueries({ queryKey: ['me'] });
-    navigate('/login');
+    navigate('/login', { replace: true });
   }
 
   function navActive(to: string): boolean {
@@ -116,49 +117,50 @@ export function AppLayout({
         </Button>
       </header>
 
-      <div className="scrollbar-none flex gap-1 overflow-x-auto border-b border-violet-200/70 bg-white/85 px-2 py-2 backdrop-blur-sm md:hidden">
-        {nav.map((item) => {
-          const active = navActive(item.to);
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-semibold ${
-                active ? 'bg-indigo-100 text-indigo-900' : 'text-neutral-700'
-              }`}
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              {item.label}
-              {item.to === '/messages' && unread ? (
-                <Badge variant="primary" size="sm" className="min-w-5 justify-center text-[10px]">
-                  {unread}
-                </Badge>
-              ) : null}
-            </NavLink>
-          );
-        })}
-      </div>
-
-      <aside
-        className="fixed bottom-0 left-0 top-14 z-30 hidden w-[260px] flex-col overflow-y-auto border-r border-white/10 bg-gradient-to-b from-indigo-950/92 via-violet-900/88 to-fuchsia-950/85 px-2 py-4 shadow-inner shadow-black/10 backdrop-blur-lg md:flex"
-        style={{ width: SIDEBAR_W }}
-        aria-label="Sidebar"
-      >
-        <div className="text-muted px-2 pb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">Menu</div>
-        <nav className="flex flex-col gap-0.5">{navItems}</nav>
-        <div className="mt-auto border-t border-white/10 pt-4">
-          <p className="px-3 text-[10px] font-semibold uppercase tracking-wide text-white/45">Signed in as</p>
-          <p className="truncate px-3 pb-1 text-xs text-white/80">{user.email}</p>
+      {/* Offset fixed header (h-14) so breadcrumbs and in-flow chrome are not painted underneath it */}
+      <div className="pt-14">
+        <div className="scrollbar-none flex gap-1 overflow-x-auto border-b border-violet-200/70 bg-white/85 px-2 py-2 backdrop-blur-sm md:hidden">
+          {nav.map((item) => {
+            const active = navActive(item.to);
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-semibold ${
+                  active ? 'bg-indigo-100 text-indigo-900' : 'text-neutral-700'
+                }`}
+              >
+                <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                {item.label}
+                {item.to === '/messages' && unread ? (
+                  <Badge variant="primary" size="sm" className="min-w-5 justify-center text-[10px]">
+                    {unread}
+                  </Badge>
+                ) : null}
+              </NavLink>
+            );
+          })}
         </div>
-      </aside>
 
-      <main
-        className="min-h-[calc(100vh-3.5rem)] px-5 py-6 md:ml-[260px] md:pt-8"
-      >
-        <PageBreadcrumbs />
-        {children ?? <Outlet />}
-      </main>
+        <aside
+          className="fixed bottom-0 left-0 top-14 z-30 hidden w-[260px] flex-col overflow-y-auto border-r border-white/10 bg-gradient-to-b from-indigo-950/92 via-violet-900/88 to-fuchsia-950/85 px-2 py-4 shadow-inner shadow-black/10 backdrop-blur-lg md:flex"
+          style={{ width: SIDEBAR_W }}
+          aria-label="Sidebar"
+        >
+          <div className="text-muted px-2 pb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">Menu</div>
+          <nav className="flex flex-col gap-0.5">{navItems}</nav>
+          <div className="mt-auto border-t border-white/10 pt-4">
+            <p className="px-3 text-[10px] font-semibold uppercase tracking-wide text-white/45">Signed in as</p>
+            <p className="truncate px-3 pb-1 text-xs text-white/80">{user.email}</p>
+          </div>
+        </aside>
+
+        <main className="min-h-[calc(100vh-3.5rem)] px-5 py-6 md:ml-[260px] md:pt-8">
+          <PageBreadcrumbs />
+          {children ?? <Outlet />}
+        </main>
+      </div>
     </div>
   );
 }

@@ -7,8 +7,20 @@ export type AccountPickRow = {
   frozen?: boolean;
 };
 
+/** Peer transfer destination row (no balance). */
+export type PeerDestinationRow = {
+  nickname: string;
+  mask: string;
+  type: string;
+};
+
+/** Label for peer “To their account”: `nickname mask · type` (no cents / formatMoney). */
+export function formatPeerDestinationLabel(a: PeerDestinationRow): string {
+  return `${a.nickname} ${a.mask} · ${a.type}`;
+}
+
 /**
- * Peer “To their account” pattern: nickname, mask, type, formatted balance (with $ via formatMoney).
+ * Standard account picker: nickname, mask, type, formatted balance (with $ via formatMoney).
  */
 export function formatAccountOptionLabel(
   a: AccountPickRow,

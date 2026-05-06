@@ -12,6 +12,7 @@ type Props = {
   fullWidth?: boolean;
   name?: string;
   emptySelectionLabel?: string;
+  truncateTrigger?: boolean;
 };
 
 export function AccountSelect({ emptySelectionLabel = 'No accounts available', ...props }: Props) {

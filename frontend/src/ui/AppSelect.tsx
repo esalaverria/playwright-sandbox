@@ -13,6 +13,8 @@ type Props = {
   name?: string;
   /** Shown when `options` is empty (e.g. “No accounts available”). */
   emptySelectionLabel?: string;
+  /** Ellipsis long account labels in the closed trigger (popover list unchanged). */
+  truncateTrigger?: boolean;
 };
 
 export function AppSelect({
@@ -25,6 +27,7 @@ export function AppSelect({
   fullWidth = true,
   name,
   emptySelectionLabel = 'No options',
+  truncateTrigger = false,
 }: Props) {
   const disabledKeys = new Set(options.filter((o) => o.disabled).map((o) => o.id));
 
@@ -40,9 +43,16 @@ export function AppSelect({
         onSelectionChange={(k) => onChange(k == null ? '' : String(k))}
         disabledKeys={disabledKeys}
       >
-        <Select.Trigger aria-label={ariaLabel}>
-          <Select.Value />
-          <Select.Indicator />
+        <Select.Trigger
+          aria-label={ariaLabel}
+          className={
+            truncateTrigger ? 'flex min-w-0 max-w-full items-center gap-2 [&]:justify-between' : undefined
+          }
+        >
+          <span className={truncateTrigger ? 'min-w-0 flex-1 overflow-hidden text-left' : undefined}>
+            <Select.Value className={truncateTrigger ? 'block min-w-0 truncate' : undefined} />
+          </span>
+          <Select.Indicator className={truncateTrigger ? 'shrink-0' : undefined} />
         </Select.Trigger>
         <Select.Popover>
           <ListBox>

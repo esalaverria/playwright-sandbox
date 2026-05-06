@@ -119,6 +119,7 @@ export function CardsPage() {
   const activeCards = [...creditCards]
     .filter((a) => a.cardLifecycle === 'ACTIVE' && !a.closedAt)
     .sort((a, b) => {
+      if (!!a.frozen !== !!b.frozen) return a.frozen ? 1 : -1;
       if (!!a.isPrimaryCard !== !!b.isPrimaryCard) return a.isPrimaryCard ? -1 : 1;
       return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
     });
@@ -255,8 +256,8 @@ export function CardsPage() {
         return (
           <article
             key={c.id}
-            className={`rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-[opacity,filter,background-color] duration-150 ${
-              frozenChrome ? 'bg-neutral-50/90 opacity-[0.96] saturate-75' : ''
+            className={`rounded-2xl border border-neutral-200 p-6 shadow-sm transition-[opacity,filter,background-color] duration-150 ${
+              frozenChrome ? 'bg-neutral-100 opacity-[0.98] saturate-[0.72] ring-1 ring-neutral-200' : 'bg-white'
             }`}
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -289,7 +290,21 @@ export function CardsPage() {
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-3 md:self-start">
+              <div className="flex shrink-0 flex-row flex-wrap items-center justify-end gap-4 md:self-start">
+                {limit != null ? (
+                  <Switch
+                    isSelected={c.allowOverLimit}
+                    isDisabled={!isActive}
+                    onChange={(next: boolean) => toggleOverLimit.mutate({ id: c.id, allowOverLimit: next })}
+                  >
+                    <Switch.Content className="flex cursor-pointer items-center gap-2">
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      <span className="whitespace-nowrap text-sm font-medium text-neutral-800">Allow over limit</span>
+                    </Switch.Content>
+                  </Switch>
+                ) : null}
                 <Switch
                   isSelected={c.frozen}
                   isDisabled={!isActive}
@@ -325,22 +340,10 @@ export function CardsPage() {
 
             {limit != null ? (
               <>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="mt-3">
                   <p className="text-sm text-neutral-700">
                     Limit: {formatMoney(limit)} · Utilization {util}%
                   </p>
-                  <Switch
-                    isSelected={c.allowOverLimit}
-                    isDisabled={!isActive}
-                    onChange={(next: boolean) => toggleOverLimit.mutate({ id: c.id, allowOverLimit: next })}
-                  >
-                    <Switch.Content className="flex cursor-pointer items-center gap-2">
-                      <Switch.Control>
-                        <Switch.Thumb />
-                      </Switch.Control>
-                      <span className="whitespace-nowrap text-sm font-medium text-neutral-800">Allow over limit</span>
-                    </Switch.Content>
-                  </Switch>
                 </div>
                 <ProgressBar.Root
                   value={util}
@@ -404,10 +407,15 @@ export function CardsPage() {
               <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
                 <div className="space-y-2">
                   {sens.nameOnCard ? (
-                    <p className="text-sm font-semibold text-neutral-800">Name on card: {sens.nameOnCard}</p>
+                    <div className="pb-1">
+                      <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Name on card</p>
+                      <p className="mt-1 font-mono text-base font-bold tracking-wide text-neutral-900">
+                        {sens.nameOnCard}
+                      </p>
+                    </div>
                   ) : null}
                   <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Card number</p>
-                  <p className="font-mono text-base tracking-wide text-neutral-900">
+                  <p className="font-mono text-base font-bold tracking-wide text-neutral-900">
                     {sens.panFull?.replace(/(\d{4})/g, '$1 ').trim()}
                   </p>
                   <div className="flex flex-wrap gap-8 pt-2">
@@ -447,6 +455,7 @@ export function CardsPage() {
                     options={fundingOptions}
                     value={payFrom}
                     onChange={(id) => setPayFromByCard((m) => ({ ...m, [c.id]: id }))}
+                    truncateTrigger
                   />
                 </div>
                 <div className="min-w-[160px] flex-1">

@@ -6,7 +6,7 @@ import { usePrivacy } from '../privacy/PrivacyProvider';
 import { useToast } from '../notifications/ToastProvider';
 import { CurrencyTextField } from '../ui/CurrencyTextField';
 import { AccountSelect } from '../ui/AccountSelect';
-import { formatAccountOptionLabel } from '../ui/account-option-label';
+import { formatAccountOptionLabel, formatPeerDestinationLabel } from '../ui/account-option-label';
 
 type TransferTabKey = 'internal' | 'peer';
 
@@ -161,15 +161,11 @@ export function TransferPage() {
   }));
   const peerToOptions = peerAccounts.map((a) => ({
     id: a.id,
-    label: formatAccountOptionLabel(
-      {
-        nickname: a.nickname,
-        mask: a.mask,
-        type: a.type,
-        balanceCents: a.balanceCents,
-      },
-      formatMoney,
-    ),
+    label: formatPeerDestinationLabel({
+      nickname: a.nickname,
+      mask: a.mask,
+      type: a.type,
+    }),
   }));
 
   const inputClass = 'mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
