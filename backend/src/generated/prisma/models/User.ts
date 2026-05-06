@@ -20,8 +20,18 @@ export type UserModel = runtime.Types.Result.DefaultSelection<Prisma.$UserPayloa
 
 export type AggregateUser = {
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
+}
+
+export type UserAvgAggregateOutputType = {
+  defaultCardLimitCents: number | null
+}
+
+export type UserSumAggregateOutputType = {
+  defaultCardLimitCents: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -30,6 +40,8 @@ export type UserMinAggregateOutputType = {
   passwordHash: string | null
   fullName: string | null
   phone: string | null
+  defaultCardLimitCents: number | null
+  primaryCardId: string | null
   locked: boolean | null
   emailVerified: boolean | null
   createdAt: Date | null
@@ -41,6 +53,8 @@ export type UserMaxAggregateOutputType = {
   passwordHash: string | null
   fullName: string | null
   phone: string | null
+  defaultCardLimitCents: number | null
+  primaryCardId: string | null
   locked: boolean | null
   emailVerified: boolean | null
   createdAt: Date | null
@@ -52,6 +66,8 @@ export type UserCountAggregateOutputType = {
   passwordHash: number
   fullName: number
   phone: number
+  defaultCardLimitCents: number
+  primaryCardId: number
   locked: number
   emailVerified: number
   createdAt: number
@@ -59,12 +75,22 @@ export type UserCountAggregateOutputType = {
 }
 
 
+export type UserAvgAggregateInputType = {
+  defaultCardLimitCents?: true
+}
+
+export type UserSumAggregateInputType = {
+  defaultCardLimitCents?: true
+}
+
 export type UserMinAggregateInputType = {
   id?: true
   email?: true
   passwordHash?: true
   fullName?: true
   phone?: true
+  defaultCardLimitCents?: true
+  primaryCardId?: true
   locked?: true
   emailVerified?: true
   createdAt?: true
@@ -76,6 +102,8 @@ export type UserMaxAggregateInputType = {
   passwordHash?: true
   fullName?: true
   phone?: true
+  defaultCardLimitCents?: true
+  primaryCardId?: true
   locked?: true
   emailVerified?: true
   createdAt?: true
@@ -87,6 +115,8 @@ export type UserCountAggregateInputType = {
   passwordHash?: true
   fullName?: true
   phone?: true
+  defaultCardLimitCents?: true
+  primaryCardId?: true
   locked?: true
   emailVerified?: true
   createdAt?: true
@@ -131,6 +161,18 @@ export type UserAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: UserAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: UserSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: UserMinAggregateInputType
@@ -161,6 +203,8 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   _count?: UserCountAggregateInputType | true
+  _avg?: UserAvgAggregateInputType
+  _sum?: UserSumAggregateInputType
   _min?: UserMinAggregateInputType
   _max?: UserMaxAggregateInputType
 }
@@ -171,10 +215,14 @@ export type UserGroupByOutputType = {
   passwordHash: string
   fullName: string
   phone: string | null
+  defaultCardLimitCents: number
+  primaryCardId: string | null
   locked: boolean
   emailVerified: boolean
   createdAt: Date
   _count: UserCountAggregateOutputType | null
+  _avg: UserAvgAggregateOutputType | null
+  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
 }
@@ -203,9 +251,12 @@ export type UserWhereInput = {
   passwordHash?: Prisma.StringFilter<"User"> | string
   fullName?: Prisma.StringFilter<"User"> | string
   phone?: Prisma.StringNullableFilter<"User"> | string | null
+  defaultCardLimitCents?: Prisma.IntFilter<"User"> | number
+  primaryCardId?: Prisma.StringNullableFilter<"User"> | string | null
   locked?: Prisma.BoolFilter<"User"> | boolean
   emailVerified?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  primaryCard?: Prisma.XOR<Prisma.AccountNullableScalarRelationFilter, Prisma.AccountWhereInput> | null
   accounts?: Prisma.AccountListRelationFilter
   payees?: Prisma.PayeeListRelationFilter
   scheduledPayments?: Prisma.ScheduledPaymentListRelationFilter
@@ -219,9 +270,12 @@ export type UserOrderByWithRelationInput = {
   passwordHash?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
+  defaultCardLimitCents?: Prisma.SortOrder
+  primaryCardId?: Prisma.SortOrderInput | Prisma.SortOrder
   locked?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  primaryCard?: Prisma.AccountOrderByWithRelationInput
   accounts?: Prisma.AccountOrderByRelationAggregateInput
   payees?: Prisma.PayeeOrderByRelationAggregateInput
   scheduledPayments?: Prisma.ScheduledPaymentOrderByRelationAggregateInput
@@ -238,9 +292,12 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   passwordHash?: Prisma.StringFilter<"User"> | string
   fullName?: Prisma.StringFilter<"User"> | string
   phone?: Prisma.StringNullableFilter<"User"> | string | null
+  defaultCardLimitCents?: Prisma.IntFilter<"User"> | number
+  primaryCardId?: Prisma.StringNullableFilter<"User"> | string | null
   locked?: Prisma.BoolFilter<"User"> | boolean
   emailVerified?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  primaryCard?: Prisma.XOR<Prisma.AccountNullableScalarRelationFilter, Prisma.AccountWhereInput> | null
   accounts?: Prisma.AccountListRelationFilter
   payees?: Prisma.PayeeListRelationFilter
   scheduledPayments?: Prisma.ScheduledPaymentListRelationFilter
@@ -254,12 +311,16 @@ export type UserOrderByWithAggregationInput = {
   passwordHash?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
+  defaultCardLimitCents?: Prisma.SortOrder
+  primaryCardId?: Prisma.SortOrderInput | Prisma.SortOrder
   locked?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
+  _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
+  _sum?: Prisma.UserSumOrderByAggregateInput
 }
 
 export type UserScalarWhereWithAggregatesInput = {
@@ -271,6 +332,8 @@ export type UserScalarWhereWithAggregatesInput = {
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   fullName?: Prisma.StringWithAggregatesFilter<"User"> | string
   phone?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  defaultCardLimitCents?: Prisma.IntWithAggregatesFilter<"User"> | number
+  primaryCardId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   locked?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   emailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -282,9 +345,11 @@ export type UserCreateInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
+  primaryCard?: Prisma.AccountCreateNestedOneWithoutPrimaryForUsersInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   payees?: Prisma.PayeeCreateNestedManyWithoutUserInput
   scheduledPayments?: Prisma.ScheduledPaymentCreateNestedManyWithoutUserInput
@@ -298,6 +363,8 @@ export type UserUncheckedCreateInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
+  primaryCardId?: string | null
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
@@ -314,9 +381,11 @@ export type UserUpdateInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  primaryCard?: Prisma.AccountUpdateOneWithoutPrimaryForUsersNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   payees?: Prisma.PayeeUpdateManyWithoutUserNestedInput
   scheduledPayments?: Prisma.ScheduledPaymentUpdateManyWithoutUserNestedInput
@@ -330,6 +399,8 @@ export type UserUncheckedUpdateInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  primaryCardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -346,6 +417,8 @@ export type UserCreateManyInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
+  primaryCardId?: string | null
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
@@ -357,6 +430,7 @@ export type UserUpdateManyMutationInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -368,6 +442,8 @@ export type UserUncheckedUpdateManyInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  primaryCardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -379,9 +455,15 @@ export type UserCountOrderByAggregateInput = {
   passwordHash?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
+  defaultCardLimitCents?: Prisma.SortOrder
+  primaryCardId?: Prisma.SortOrder
   locked?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type UserAvgOrderByAggregateInput = {
+  defaultCardLimitCents?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -390,6 +472,8 @@ export type UserMaxOrderByAggregateInput = {
   passwordHash?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
+  defaultCardLimitCents?: Prisma.SortOrder
+  primaryCardId?: Prisma.SortOrder
   locked?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -401,14 +485,30 @@ export type UserMinOrderByAggregateInput = {
   passwordHash?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
+  defaultCardLimitCents?: Prisma.SortOrder
+  primaryCardId?: Prisma.SortOrder
   locked?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
+export type UserSumOrderByAggregateInput = {
+  defaultCardLimitCents?: Prisma.SortOrder
+}
+
 export type UserScalarRelationFilter = {
   is?: Prisma.UserWhereInput
   isNot?: Prisma.UserWhereInput
+}
+
+export type UserListRelationFilter = {
+  every?: Prisma.UserWhereInput
+  some?: Prisma.UserWhereInput
+  none?: Prisma.UserWhereInput
+}
+
+export type UserOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -417,6 +517,14 @@ export type StringFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type BoolFieldUpdateOperationsInput = {
@@ -433,12 +541,54 @@ export type UserCreateNestedOneWithoutAccountsInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
+export type UserCreateNestedManyWithoutPrimaryCardInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrimaryCardInput, Prisma.UserUncheckedCreateWithoutPrimaryCardInput> | Prisma.UserCreateWithoutPrimaryCardInput[] | Prisma.UserUncheckedCreateWithoutPrimaryCardInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrimaryCardInput | Prisma.UserCreateOrConnectWithoutPrimaryCardInput[]
+  createMany?: Prisma.UserCreateManyPrimaryCardInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUncheckedCreateNestedManyWithoutPrimaryCardInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrimaryCardInput, Prisma.UserUncheckedCreateWithoutPrimaryCardInput> | Prisma.UserCreateWithoutPrimaryCardInput[] | Prisma.UserUncheckedCreateWithoutPrimaryCardInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrimaryCardInput | Prisma.UserCreateOrConnectWithoutPrimaryCardInput[]
+  createMany?: Prisma.UserCreateManyPrimaryCardInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
 export type UserUpdateOneRequiredWithoutAccountsNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutAccountsInput, Prisma.UserUncheckedCreateWithoutAccountsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutAccountsInput
   upsert?: Prisma.UserUpsertWithoutAccountsInput
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAccountsInput, Prisma.UserUpdateWithoutAccountsInput>, Prisma.UserUncheckedUpdateWithoutAccountsInput>
+}
+
+export type UserUpdateManyWithoutPrimaryCardNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrimaryCardInput, Prisma.UserUncheckedCreateWithoutPrimaryCardInput> | Prisma.UserCreateWithoutPrimaryCardInput[] | Prisma.UserUncheckedCreateWithoutPrimaryCardInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrimaryCardInput | Prisma.UserCreateOrConnectWithoutPrimaryCardInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutPrimaryCardInput | Prisma.UserUpsertWithWhereUniqueWithoutPrimaryCardInput[]
+  createMany?: Prisma.UserCreateManyPrimaryCardInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutPrimaryCardInput | Prisma.UserUpdateWithWhereUniqueWithoutPrimaryCardInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutPrimaryCardInput | Prisma.UserUpdateManyWithWhereWithoutPrimaryCardInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUncheckedUpdateManyWithoutPrimaryCardNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPrimaryCardInput, Prisma.UserUncheckedCreateWithoutPrimaryCardInput> | Prisma.UserCreateWithoutPrimaryCardInput[] | Prisma.UserUncheckedCreateWithoutPrimaryCardInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPrimaryCardInput | Prisma.UserCreateOrConnectWithoutPrimaryCardInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutPrimaryCardInput | Prisma.UserUpsertWithWhereUniqueWithoutPrimaryCardInput[]
+  createMany?: Prisma.UserCreateManyPrimaryCardInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutPrimaryCardInput | Prisma.UserUpdateWithWhereUniqueWithoutPrimaryCardInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutPrimaryCardInput | Prisma.UserUpdateManyWithWhereWithoutPrimaryCardInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
 export type UserCreateNestedOneWithoutPayeesInput = {
@@ -503,9 +653,11 @@ export type UserCreateWithoutAccountsInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
+  primaryCard?: Prisma.AccountCreateNestedOneWithoutPrimaryForUsersInput
   payees?: Prisma.PayeeCreateNestedManyWithoutUserInput
   scheduledPayments?: Prisma.ScheduledPaymentCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
@@ -518,6 +670,8 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
+  primaryCardId?: string | null
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
@@ -530,6 +684,50 @@ export type UserUncheckedCreateWithoutAccountsInput = {
 export type UserCreateOrConnectWithoutAccountsInput = {
   where: Prisma.UserWhereUniqueInput
   create: Prisma.XOR<Prisma.UserCreateWithoutAccountsInput, Prisma.UserUncheckedCreateWithoutAccountsInput>
+}
+
+export type UserCreateWithoutPrimaryCardInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  phone?: string | null
+  defaultCardLimitCents?: number
+  locked?: boolean
+  emailVerified?: boolean
+  createdAt?: Date | string
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  payees?: Prisma.PayeeCreateNestedManyWithoutUserInput
+  scheduledPayments?: Prisma.ScheduledPaymentCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageCreateNestedManyWithoutUserInput
+  activities?: Prisma.UserActivityCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutPrimaryCardInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  phone?: string | null
+  defaultCardLimitCents?: number
+  locked?: boolean
+  emailVerified?: boolean
+  createdAt?: Date | string
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  payees?: Prisma.PayeeUncheckedCreateNestedManyWithoutUserInput
+  scheduledPayments?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageUncheckedCreateNestedManyWithoutUserInput
+  activities?: Prisma.UserActivityUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutPrimaryCardInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPrimaryCardInput, Prisma.UserUncheckedCreateWithoutPrimaryCardInput>
+}
+
+export type UserCreateManyPrimaryCardInputEnvelope = {
+  data: Prisma.UserCreateManyPrimaryCardInput | Prisma.UserCreateManyPrimaryCardInput[]
+  skipDuplicates?: boolean
 }
 
 export type UserUpsertWithoutAccountsInput = {
@@ -549,9 +747,11 @@ export type UserUpdateWithoutAccountsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  primaryCard?: Prisma.AccountUpdateOneWithoutPrimaryForUsersNestedInput
   payees?: Prisma.PayeeUpdateManyWithoutUserNestedInput
   scheduledPayments?: Prisma.ScheduledPaymentUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
@@ -564,6 +764,8 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  primaryCardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -573,15 +775,49 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   activities?: Prisma.UserActivityUncheckedUpdateManyWithoutUserNestedInput
 }
 
+export type UserUpsertWithWhereUniqueWithoutPrimaryCardInput = {
+  where: Prisma.UserWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPrimaryCardInput, Prisma.UserUncheckedUpdateWithoutPrimaryCardInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPrimaryCardInput, Prisma.UserUncheckedCreateWithoutPrimaryCardInput>
+}
+
+export type UserUpdateWithWhereUniqueWithoutPrimaryCardInput = {
+  where: Prisma.UserWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPrimaryCardInput, Prisma.UserUncheckedUpdateWithoutPrimaryCardInput>
+}
+
+export type UserUpdateManyWithWhereWithoutPrimaryCardInput = {
+  where: Prisma.UserScalarWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutPrimaryCardInput>
+}
+
+export type UserScalarWhereInput = {
+  AND?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  OR?: Prisma.UserScalarWhereInput[]
+  NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  id?: Prisma.StringFilter<"User"> | string
+  email?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringFilter<"User"> | string
+  fullName?: Prisma.StringFilter<"User"> | string
+  phone?: Prisma.StringNullableFilter<"User"> | string | null
+  defaultCardLimitCents?: Prisma.IntFilter<"User"> | number
+  primaryCardId?: Prisma.StringNullableFilter<"User"> | string | null
+  locked?: Prisma.BoolFilter<"User"> | boolean
+  emailVerified?: Prisma.BoolFilter<"User"> | boolean
+  createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+}
+
 export type UserCreateWithoutPayeesInput = {
   id?: string
   email: string
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
+  primaryCard?: Prisma.AccountCreateNestedOneWithoutPrimaryForUsersInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   scheduledPayments?: Prisma.ScheduledPaymentCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
@@ -594,6 +830,8 @@ export type UserUncheckedCreateWithoutPayeesInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
+  primaryCardId?: string | null
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
@@ -625,9 +863,11 @@ export type UserUpdateWithoutPayeesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  primaryCard?: Prisma.AccountUpdateOneWithoutPrimaryForUsersNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   scheduledPayments?: Prisma.ScheduledPaymentUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
@@ -640,6 +880,8 @@ export type UserUncheckedUpdateWithoutPayeesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  primaryCardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -655,9 +897,11 @@ export type UserCreateWithoutScheduledPaymentsInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
+  primaryCard?: Prisma.AccountCreateNestedOneWithoutPrimaryForUsersInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   payees?: Prisma.PayeeCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutUserInput
@@ -670,6 +914,8 @@ export type UserUncheckedCreateWithoutScheduledPaymentsInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
+  primaryCardId?: string | null
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
@@ -701,9 +947,11 @@ export type UserUpdateWithoutScheduledPaymentsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  primaryCard?: Prisma.AccountUpdateOneWithoutPrimaryForUsersNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   payees?: Prisma.PayeeUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
@@ -716,6 +964,8 @@ export type UserUncheckedUpdateWithoutScheduledPaymentsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  primaryCardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -731,9 +981,11 @@ export type UserCreateWithoutMessagesInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
+  primaryCard?: Prisma.AccountCreateNestedOneWithoutPrimaryForUsersInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   payees?: Prisma.PayeeCreateNestedManyWithoutUserInput
   scheduledPayments?: Prisma.ScheduledPaymentCreateNestedManyWithoutUserInput
@@ -746,6 +998,8 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
+  primaryCardId?: string | null
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
@@ -777,9 +1031,11 @@ export type UserUpdateWithoutMessagesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  primaryCard?: Prisma.AccountUpdateOneWithoutPrimaryForUsersNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   payees?: Prisma.PayeeUpdateManyWithoutUserNestedInput
   scheduledPayments?: Prisma.ScheduledPaymentUpdateManyWithoutUserNestedInput
@@ -792,6 +1048,8 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  primaryCardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -807,9 +1065,11 @@ export type UserCreateWithoutActivitiesInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
+  primaryCard?: Prisma.AccountCreateNestedOneWithoutPrimaryForUsersInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   payees?: Prisma.PayeeCreateNestedManyWithoutUserInput
   scheduledPayments?: Prisma.ScheduledPaymentCreateNestedManyWithoutUserInput
@@ -822,6 +1082,8 @@ export type UserUncheckedCreateWithoutActivitiesInput = {
   passwordHash: string
   fullName: string
   phone?: string | null
+  defaultCardLimitCents?: number
+  primaryCardId?: string | null
   locked?: boolean
   emailVerified?: boolean
   createdAt?: Date | string
@@ -853,9 +1115,11 @@ export type UserUpdateWithoutActivitiesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  primaryCard?: Prisma.AccountUpdateOneWithoutPrimaryForUsersNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   payees?: Prisma.PayeeUpdateManyWithoutUserNestedInput
   scheduledPayments?: Prisma.ScheduledPaymentUpdateManyWithoutUserNestedInput
@@ -868,6 +1132,8 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  primaryCardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -875,6 +1141,64 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
   payees?: Prisma.PayeeUncheckedUpdateManyWithoutUserNestedInput
   scheduledPayments?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateManyPrimaryCardInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  fullName: string
+  phone?: string | null
+  defaultCardLimitCents?: number
+  locked?: boolean
+  emailVerified?: boolean
+  createdAt?: Date | string
+}
+
+export type UserUpdateWithoutPrimaryCardInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  payees?: Prisma.PayeeUpdateManyWithoutUserNestedInput
+  scheduledPayments?: Prisma.ScheduledPaymentUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUpdateManyWithoutUserNestedInput
+  activities?: Prisma.UserActivityUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPrimaryCardInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  payees?: Prisma.PayeeUncheckedUpdateManyWithoutUserNestedInput
+  scheduledPayments?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUncheckedUpdateManyWithoutUserNestedInput
+  activities?: Prisma.UserActivityUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateManyWithoutPrimaryCardInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  defaultCardLimitCents?: Prisma.IntFieldUpdateOperationsInput | number
+  locked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -950,9 +1274,12 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   passwordHash?: boolean
   fullName?: boolean
   phone?: boolean
+  defaultCardLimitCents?: boolean
+  primaryCardId?: boolean
   locked?: boolean
   emailVerified?: boolean
   createdAt?: boolean
+  primaryCard?: boolean | Prisma.User$primaryCardArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
   payees?: boolean | Prisma.User$payeesArgs<ExtArgs>
   scheduledPayments?: boolean | Prisma.User$scheduledPaymentsArgs<ExtArgs>
@@ -967,9 +1294,12 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   passwordHash?: boolean
   fullName?: boolean
   phone?: boolean
+  defaultCardLimitCents?: boolean
+  primaryCardId?: boolean
   locked?: boolean
   emailVerified?: boolean
   createdAt?: boolean
+  primaryCard?: boolean | Prisma.User$primaryCardArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -978,9 +1308,12 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   passwordHash?: boolean
   fullName?: boolean
   phone?: boolean
+  defaultCardLimitCents?: boolean
+  primaryCardId?: boolean
   locked?: boolean
   emailVerified?: boolean
   createdAt?: boolean
+  primaryCard?: boolean | Prisma.User$primaryCardArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -989,13 +1322,16 @@ export type UserSelectScalar = {
   passwordHash?: boolean
   fullName?: boolean
   phone?: boolean
+  defaultCardLimitCents?: boolean
+  primaryCardId?: boolean
   locked?: boolean
   emailVerified?: boolean
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "fullName" | "phone" | "locked" | "emailVerified" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "fullName" | "phone" | "defaultCardLimitCents" | "primaryCardId" | "locked" | "emailVerified" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  primaryCard?: boolean | Prisma.User$primaryCardArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
   payees?: boolean | Prisma.User$payeesArgs<ExtArgs>
   scheduledPayments?: boolean | Prisma.User$scheduledPaymentsArgs<ExtArgs>
@@ -1003,12 +1339,17 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   activities?: boolean | Prisma.User$activitiesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  primaryCard?: boolean | Prisma.User$primaryCardArgs<ExtArgs>
+}
+export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  primaryCard?: boolean | Prisma.User$primaryCardArgs<ExtArgs>
+}
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
+    primaryCard: Prisma.$AccountPayload<ExtArgs> | null
     accounts: Prisma.$AccountPayload<ExtArgs>[]
     payees: Prisma.$PayeePayload<ExtArgs>[]
     scheduledPayments: Prisma.$ScheduledPaymentPayload<ExtArgs>[]
@@ -1021,6 +1362,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     passwordHash: string
     fullName: string
     phone: string | null
+    defaultCardLimitCents: number
+    primaryCardId: string | null
     locked: boolean
     emailVerified: boolean
     createdAt: Date
@@ -1418,6 +1761,7 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  primaryCard<T extends Prisma.User$primaryCardArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$primaryCardArgs<ExtArgs>>): Prisma.Prisma__AccountClient<runtime.Types.Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   accounts<T extends Prisma.User$accountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payees<T extends Prisma.User$payeesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$payeesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PayeePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   scheduledPayments<T extends Prisma.User$scheduledPaymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$scheduledPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ScheduledPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1457,6 +1801,8 @@ export interface UserFieldRefs {
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly fullName: Prisma.FieldRef<"User", 'String'>
   readonly phone: Prisma.FieldRef<"User", 'String'>
+  readonly defaultCardLimitCents: Prisma.FieldRef<"User", 'Int'>
+  readonly primaryCardId: Prisma.FieldRef<"User", 'String'>
   readonly locked: Prisma.FieldRef<"User", 'Boolean'>
   readonly emailVerified: Prisma.FieldRef<"User", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
@@ -1714,6 +2060,10 @@ export type UserCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.UserCreateManyInput | Prisma.UserCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1784,6 +2134,10 @@ export type UserUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Users to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1850,6 +2204,25 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Users to delete.
    */
   limit?: number
+}
+
+/**
+ * User.primaryCard
+ */
+export type User$primaryCardArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Account
+   */
+  select?: Prisma.AccountSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Account
+   */
+  omit?: Prisma.AccountOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AccountInclude<ExtArgs> | null
+  where?: Prisma.AccountWhereInput
 }
 
 /**

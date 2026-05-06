@@ -18,6 +18,8 @@ type BillRow = {
   payFromInvalid: boolean;
   payFromIssue: string | null;
   fromAccountNickname: string;
+  fromAccountType?: string;
+  fromAccountBalanceCents?: number;
 };
 
 type BillTab = 'schedule' | 'paynow';
@@ -51,12 +53,45 @@ export function BillsPage() {
   const accounts = useQuery({
     queryKey: ['accounts'],
     queryFn: async () => {
-      const { data } = await api.get<{ accounts: { id: string; nickname: string; type: string }[] }>('/accounts');
+      const { data } = await api.get<{
+        accounts: {
+          id: string;
+          nickname: string;
+          type: string;
+          balanceCents: number;
+          closedAt?: string | null;
+          frozen?: boolean;
+          cardLifecycle?: string;
+        }[];
+      }>('/accounts');
       return data.accounts;
     },
   });
 
-  const depositAccounts = (accounts.data ?? []).filter((a) => a.type === 'CHECKING' || a.type === 'SAVINGS');
+  const payFromAccounts = (accounts.data ?? []).filter((a) => {
+    if (a.closedAt) return false;
+    if (a.type === 'CHECKING' || a.type === 'SAVINGS') return true;
+    return a.type === 'CREDIT' && a.cardLifecycle === 'ACTIVE';
+  });
+  const payees = useQuery({
+    queryKey: ['payees'],
+    queryFn: async () => {
+      const { data } = await api.get<{
+        payees: { id: string; displayName: string; nickname: string | null; externalRef: string }[];
+      }>('/payees');
+      return data.payees;
+    },
+  });
+  const [biller, setBiller] = useState('');
+  const [payNowBiller, setPayNowBiller] = useState('');
+  const matchedPayee = (payees.data ?? []).find((p) => {
+    const t = biller.trim().toLowerCase();
+    return t && (p.displayName.toLowerCase() === t || (p.nickname ?? '').toLowerCase() === t);
+  });
+  const matchedPayeePayNow = (payees.data ?? []).find((p) => {
+    const t = payNowBiller.trim().toLowerCase();
+    return t && (p.displayName.toLowerCase() === t || (p.nickname ?? '').toLowerCase() === t);
+  });
 
   const bills = useQuery({
     queryKey: ['bills'],
@@ -144,7 +179,7 @@ export function BillsPage() {
                 e.preventDefault();
                 const fd = new FormData(e.currentTarget);
                 create.mutate({
-                  billerName: String(fd.get('billerName') ?? ''),
+                  billerName: biller,
                   fromAccountId: String(fd.get('fromAccountId') ?? ''),
                   amountCents: Math.round(Number(billAmount) * 100),
                   dueDate: String(fd.get('dueDate') ?? ''),
@@ -153,7 +188,30 @@ export function BillsPage() {
                 });
               }}
             >
-              <TextLike name="billerName" label="Biller" required />
+              <TextLike
+                name="billerName"
+                label="Biller"
+                required
+                value={biller}
+                onChange={(v) => setBiller(v)}
+                listId="payee-options-main"
+              />
+              <datalist id="payee-options-main">
+                {(payees.data ?? []).map((p) => (
+                  <option key={`main-${p.id}`} value={p.displayName} />
+                ))}
+                {(payees.data ?? [])
+                  .filter((p) => p.nickname)
+                  .map((p) => (
+                    <option key={`main-nick-${p.id}`} value={p.nickname ?? ''} />
+                  ))}
+              </datalist>
+              {matchedPayee ? (
+                <p className="text-xs text-neutral-600">
+                  Matched payee: {matchedPayee.displayName} · {matchedPayee.nickname ?? 'No nickname'} ·{' '}
+                  {matchedPayee.externalRef}
+                </p>
+              ) : null}
               <div>
                 <Label htmlFor="bill-from-sched" className="font-medium">
                   Pay from
@@ -162,9 +220,9 @@ export function BillsPage() {
                   <option value="" disabled>
                     Select account
                   </option>
-                  {depositAccounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.nickname}
+                  {payFromAccounts.map((a) => (
+                    <option key={a.id} value={a.id} disabled={!!a.frozen}>
+                      {a.nickname} ({(a.balanceCents / 100).toFixed(2)}) {a.frozen ? '· Frozen' : ''}
                     </option>
                   ))}
                 </select>
@@ -192,7 +250,7 @@ export function BillsPage() {
                 const today = new Date();
                 const iso = today.toISOString().slice(0, 10);
                 create.mutate({
-                  billerName: String(fd.get('pn_billerName') ?? ''),
+                  billerName: payNowBiller,
                   fromAccountId: String(fd.get('pn_fromAccountId') ?? ''),
                   amountCents: Math.round(Number(payNowAmount) * 100),
                   dueDate: iso,
@@ -201,7 +259,31 @@ export function BillsPage() {
                 });
               }}
             >
-              <TextLike idSuffix="pay" name="pn_billerName" label="Biller" required />
+              <TextLike
+                idSuffix="pay"
+                name="pn_billerName"
+                label="Biller"
+                required
+                value={payNowBiller}
+                onChange={(v) => setPayNowBiller(v)}
+                listId="payee-options-now"
+              />
+              <datalist id="payee-options-now">
+                {(payees.data ?? []).map((p) => (
+                  <option key={`now-${p.id}`} value={p.displayName} />
+                ))}
+                {(payees.data ?? [])
+                  .filter((p) => p.nickname)
+                  .map((p) => (
+                    <option key={`now-nick-${p.id}`} value={p.nickname ?? ''} />
+                  ))}
+              </datalist>
+              {matchedPayeePayNow ? (
+                <p className="text-xs text-neutral-600">
+                  Matched payee: {matchedPayeePayNow.displayName} · {matchedPayeePayNow.nickname ?? 'No nickname'} ·{' '}
+                  {matchedPayeePayNow.externalRef}
+                </p>
+              ) : null}
               <div>
                 <Label htmlFor="bill-from-now" className="font-medium">
                   Pay from
@@ -210,9 +292,9 @@ export function BillsPage() {
                   <option value="" disabled>
                     Select account
                   </option>
-                  {depositAccounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.nickname}
+                  {payFromAccounts.map((a) => (
+                    <option key={a.id} value={a.id} disabled={!!a.frozen}>
+                      {a.nickname} ({(a.balanceCents / 100).toFixed(2)}) {a.frozen ? '· Frozen' : ''}
                     </option>
                   ))}
                 </select>
@@ -348,9 +430,9 @@ export function BillsPage() {
                             defaultValue={editing.fromAccountId}
                             className={selectClass}
                           >
-                            {depositAccounts.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.nickname}
+                            {payFromAccounts.map((a) => (
+                              <option key={a.id} value={a.id} disabled={!!a.frozen}>
+                                {a.nickname} ({(a.balanceCents / 100).toFixed(2)}) {a.frozen ? '· Frozen' : ''}
                               </option>
                             ))}
                           </select>
@@ -421,15 +503,31 @@ export function BillsPage() {
   );
 }
 
-function TextLike(props: { idSuffix?: string; name: string; label: string; required?: boolean }) {
-  const { idSuffix = '', name, label, required } = props;
+function TextLike(props: {
+  idSuffix?: string;
+  name: string;
+  label: string;
+  required?: boolean;
+  value: string;
+  onChange: (value: string) => void;
+  listId?: string;
+}) {
+  const { idSuffix = '', name, label, required, value, onChange, listId } = props;
   const id = `fld-${name}${idSuffix}`;
   return (
     <div>
       <Label htmlFor={id} className="font-medium">
         {label}
       </Label>
-      <Input id={id} name={name} required={required} className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none" />
+      <Input
+        id={id}
+        name={name}
+        list={listId}
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+      />
     </div>
   );
 }

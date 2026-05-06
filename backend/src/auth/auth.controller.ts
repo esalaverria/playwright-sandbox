@@ -62,6 +62,7 @@ export class AuthController {
         email: u!.email,
         fullName: u!.fullName,
         phone: u!.phone,
+        defaultCardLimitCents: u!.defaultCardLimitCents,
       },
     };
   }
@@ -76,6 +77,7 @@ export class AuthController {
         email: user.email,
         fullName: user.fullName,
         phone: user.phone,
+        defaultCardLimitCents: user.defaultCardLimitCents,
       },
     };
   }
@@ -91,7 +93,15 @@ export class AuthController {
   async me(@Req() req: Request & { user: { userId: string } }) {
     const user = await this.prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: { id: true, email: true, fullName: true, phone: true, locked: true },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        locked: true,
+        defaultCardLimitCents: true,
+        primaryCardId: true,
+      },
     });
     return { user };
   }

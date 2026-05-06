@@ -36,6 +36,7 @@ const listSelect = {
   expYear: true,
   nameOnCard: true,
   createdAt: true,
+  closedAt: true,
 } satisfies Prisma.AccountSelect;
 
 
@@ -76,11 +77,18 @@ export class AccountsService {
   }
 
   async listForUser(userId: string) {
-    return this.prisma.account.findMany({
-      where: { userId, closedAt: null },
-      orderBy: [{ type: 'asc' }, { nickname: 'asc' }],
-      select: listSelect,
-    });
+    const [accounts, user] = await Promise.all([
+      this.prisma.account.findMany({
+        where: { userId },
+        orderBy: [{ createdAt: 'desc' }],
+        select: listSelect,
+      }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { primaryCardId: true },
+      }),
+    ]);
+    return accounts.map((a) => ({ ...a, isPrimaryCard: a.id === user?.primaryCardId }));
   }
 
   async assertOwnAccount(userId: string, accountId: string) {
@@ -144,7 +152,7 @@ export class AccountsService {
         nameOnCard: user.fullName.toUpperCase(),
         cardBrand: brand,
         cardLifecycle: CLS.ACTIVE,
-        creditLimitCents: 500000,
+        creditLimitCents: user.defaultCardLimitCents,
         allowOverLimit: false,
         frozen: false,
         balanceCents: 0,
@@ -201,16 +209,21 @@ export class AccountsService {
     if (lifecycle !== CLS.CANCELLED) {
       throw new BadRequestException('Unsupported lifecycle update');
     }
-    const debtCents = Math.max(0, -acc.balanceCents);
-    if (debtCents > 0) {
+    if (acc.balanceCents !== 0) {
       throw new BadRequestException({
-        code: 'CARD_HAS_BALANCE',
-        message: 'Pay the remaining balance before closing this card.',
+        code: 'CARD_NONZERO_BALANCE',
+        message: 'Card balance must be exactly $0.00 before closing this card.',
       });
     }
-    await this.prisma.account.update({
-      where: { id: accountId },
-      data: { cardLifecycle: CLS.CANCELLED, frozen: true },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.account.update({
+        where: { id: accountId },
+        data: { cardLifecycle: CLS.CANCELLED, frozen: true, closedAt: new Date() },
+      });
+      await tx.user.updateMany({
+        where: { id: userId, primaryCardId: accountId },
+        data: { primaryCardId: null },
+      });
     });
     await this.logActivity(userId, 'CARD_CANCELLED', { accountId });
     return { ok: true, cardLifecycle: CLS.CANCELLED };
@@ -270,6 +283,10 @@ export class AccountsService {
           cardLifecycle: CLS.LOST_REPORTED,
           frozen: true,
         },
+      });
+      await tx.user.updateMany({
+        where: { id: userId, primaryCardId: old.id },
+        data: { primaryCardId: null },
       });
 
       await this.logActivity(userId, 'CARD_LOST_REPLACED', {
@@ -374,6 +391,22 @@ export class AccountsService {
     });
     await this.logActivity(userId, 'OVERLIMIT_TOGGLED', { accountId, allowOverLimit });
     return updated;
+  }
+
+  async setPrimaryCard(userId: string, accountId: string | null) {
+    if (accountId === null) {
+      await this.prisma.user.update({ where: { id: userId }, data: { primaryCardId: null } });
+      return { ok: true, primaryCardId: null };
+    }
+    const acc = await this.assertOwnOpenAccount(userId, accountId);
+    if (acc.type !== AccountType.CREDIT) {
+      throw new BadRequestException('Primary card must be a credit card account');
+    }
+    if (acc.cardLifecycle !== CLS.ACTIVE || acc.frozen) {
+      throw new BadRequestException('Only active, non-frozen cards can be primary');
+    }
+    await this.prisma.user.update({ where: { id: userId }, data: { primaryCardId: accountId } });
+    return { ok: true, primaryCardId: accountId };
   }
 
   async statementMonths(userId: string, accountId: string) {

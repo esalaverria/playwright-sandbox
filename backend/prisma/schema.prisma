@@ -47,10 +47,13 @@ model User {
   passwordHash        String
   fullName            String
   phone               String?
+  defaultCardLimitCents Int    @default(500000)
+  primaryCardId       String?
+  primaryCard         Account? @relation("PrimaryCard", fields: [primaryCardId], references: [id], onDelete: SetNull)
   locked              Boolean  @default(false)
   emailVerified       Boolean  @default(true)
   createdAt           DateTime @default(now())
-  accounts            Account[]
+  accounts            Account[] @relation("UserAccounts")
   payees              Payee[]
   scheduledPayments   ScheduledPayment[]
   messages            Message[]
@@ -60,7 +63,7 @@ model User {
 model Account {
   id                 String     @id @default(cuid())
   userId             String
-  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User       @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
   type               AccountType
   nickname           String
   mask               String
@@ -83,6 +86,7 @@ model Account {
   nameOnCard         String?
   ledgerEntries      LedgerEntry[]
   scheduledPaymentsFrom ScheduledPayment[]
+  primaryForUsers    User[]     @relation("PrimaryCard")
 }
 
 model LedgerEntry {

@@ -3,6 +3,7 @@ import { AlertTriangle, CreditCard, Plus } from 'lucide-react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { api } from '../api/client';
 import { useToast } from '../notifications/ToastProvider';
 import { usePrivacy } from '../privacy/PrivacyProvider';
@@ -22,6 +23,9 @@ type CreditAccount = {
   expMonth: number | null;
   expYear: number | null;
   nameOnCard: string | null;
+  closedAt?: string | null;
+  isPrimaryCard?: boolean;
+  createdAt?: string;
 };
 
 type CardSensitive = {
@@ -60,10 +64,19 @@ export function CardsPage() {
   const newCardModal = useOverlayState({ isOpen: openNewCard, onOpenChange: setOpenNewCard });
 
   const [lostDialog, setLostDialog] = useState<string | null>(null);
+  const [cancelDialog, setCancelDialog] = useState<string | null>(null);
+  const [closedPage, setClosedPage] = useState(1);
+  const closedPageSize = 6;
   const lostModal = useOverlayState({
     isOpen: lostDialog !== null,
     onOpenChange: (open: boolean) => {
       if (!open) setLostDialog(null);
+    },
+  });
+  const cancelModal = useOverlayState({
+    isOpen: cancelDialog !== null,
+    onOpenChange: (open: boolean) => {
+      if (!open) setCancelDialog(null);
     },
   });
 
@@ -77,6 +90,15 @@ export function CardsPage() {
 
   const creditCards = (accounts.data ?? []).filter((a) => a.type === 'CREDIT');
   const fundingAccounts = (accounts.data ?? []).filter((a) => a.type === 'CHECKING' || a.type === 'SAVINGS');
+  const activeCards = [...creditCards]
+    .filter((a) => a.cardLifecycle === 'ACTIVE' && !a.closedAt)
+    .sort((a, b) => {
+      if (!!a.isPrimaryCard !== !!b.isPrimaryCard) return a.isPrimaryCard ? -1 : 1;
+      return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
+    });
+  const closedCards = [...creditCards].filter((a) => a.cardLifecycle !== 'ACTIVE' || !!a.closedAt);
+  const pagedClosed = closedCards.slice((closedPage - 1) * closedPageSize, closedPage * closedPageSize);
+  const closedTotalPages = Math.max(1, Math.ceil(closedCards.length / closedPageSize));
 
   const requestCard = useMutation({
     mutationFn: async () =>
@@ -139,6 +161,13 @@ export function CardsPage() {
     },
     onError: (e) => toast(apiErrorMessage(e, 'Could not cancel card.'), 'error'),
   });
+  const setPrimaryCard = useMutation({
+    mutationFn: async (accountId: string | null) => api.patch('/accounts/primary-card', { accountId }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['accounts'] });
+    },
+    onError: (e) => toast(apiErrorMessage(e, 'Could not update primary card.'), 'error'),
+  });
 
   const reportLostReplace = useMutation({
     mutationFn: async (id: string) => api.post(`/accounts/${id}/report-lost-replace`),
@@ -185,7 +214,7 @@ export function CardsPage() {
         </Button>
       </div>
 
-      {creditCards.map((c) => {
+      {activeCards.map((c) => {
         const limit = c.creditLimitCents;
         const debtCents = Math.max(0, -c.balanceCents);
         const util = limit != null && limit > 0 ? Math.min(100, Math.round((debtCents / limit) * 100)) : 0;
@@ -204,7 +233,17 @@ export function CardsPage() {
               <div className="flex flex-row gap-4">
                 <CreditCard aria-hidden className="size-10 shrink-0 text-indigo-600" strokeWidth={1.75} />
                 <div>
-                  <h2 className="text-xl font-extrabold text-neutral-900">{c.nickname}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-extrabold text-neutral-900">{c.nickname}</h2>
+                    <button
+                      type="button"
+                      aria-label={c.isPrimaryCard ? 'Unset primary card' : 'Set as primary card'}
+                      className={`text-lg ${c.isPrimaryCard ? 'text-amber-500' : 'text-neutral-300'} hover:text-amber-500`}
+                      onClick={() => setPrimaryCard.mutate(c.isPrimaryCard ? null : c.id)}
+                    >
+                      ★
+                    </button>
+                  </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <Chip variant="secondary" color="default" size="sm">
                       <Chip.Label>{brand}</Chip.Label>
@@ -283,7 +322,7 @@ export function CardsPage() {
                 size="sm"
                 variant="outline"
                 isDisabled={!isActive || cancelCard.isPending}
-                onPress={() => cancelCard.mutate(c.id)}
+                onPress={() => setCancelDialog(c.id)}
               >
                 Cancel card
               </Button>
@@ -305,6 +344,14 @@ export function CardsPage() {
                   Hide card numbers
                 </Button>
               )}
+              {c.cardLifecycle !== 'LOST_REPORTED' ? (
+                <RouterLink
+                  to={`/accounts/${c.id}`}
+                  className="inline-flex items-center rounded-lg border border-neutral-300 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+                >
+                  View transactions
+                </RouterLink>
+              ) : null}
             </div>
 
             {sens ? (
@@ -378,6 +425,49 @@ export function CardsPage() {
           </article>
         );
       })}
+      {closedCards.length > 0 ? (
+        <section className="mt-2 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+          <h2 className="text-lg font-bold text-neutral-900">Closed / Lost cards</h2>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 bg-neutral-50">
+                  <th className="px-3 py-2 text-left">Card</th>
+                  <th className="px-3 py-2 text-left">Status</th>
+                  <th className="px-3 py-2 text-left">Balance</th>
+                  <th className="px-3 py-2 text-left">Expires</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {pagedClosed.map((c) => (
+                  <tr key={c.id}>
+                    <td className="px-3 py-2">{c.nickname} · {c.mask}</td>
+                    <td className="px-3 py-2">{c.cardLifecycle.replace(/_/g, ' ')}</td>
+                    <td className="px-3 py-2">{formatMoney(c.balanceCents)}</td>
+                    <td className="px-3 py-2">{formatExp(c.expMonth, c.expYear)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <Button variant="outline" size="sm" isDisabled={closedPage <= 1} onPress={() => setClosedPage((p) => p - 1)}>
+              Previous
+            </Button>
+            <span className="text-xs text-neutral-600">
+              Page {closedPage} / {closedTotalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              isDisabled={closedPage >= closedTotalPages}
+              onPress={() => setClosedPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </section>
+      ) : null}
 
       <Modal state={lostModal}>
         <Modal.Backdrop>
@@ -411,6 +501,43 @@ export function CardsPage() {
                   }}
                 >
                   Confirm replacement
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
+      <Modal state={cancelModal}>
+        <Modal.Backdrop>
+          <Modal.Container size="sm" scroll="inside">
+            <Modal.Dialog>
+              <Modal.CloseTrigger aria-label="Close dialog" />
+              <Modal.Header>
+                <Modal.Heading>Cancel card?</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p className="text-sm text-neutral-700">
+                  Cancelling this card will close it and remove it from active payment flows.
+                </p>
+              </Modal.Body>
+              <Modal.Footer className="flex justify-end gap-2">
+                <Button variant="ghost" onPress={() => cancelModal.close()}>
+                  Back
+                </Button>
+                <Button
+                  variant="danger"
+                  isDisabled={cancelCard.isPending}
+                  onPress={async () => {
+                    if (!cancelDialog) return;
+                    try {
+                      await cancelCard.mutateAsync(cancelDialog);
+                      setCancelDialog(null);
+                    } catch {
+                      /* toast handles error */
+                    }
+                  }}
+                >
+                  Confirm cancel
                 </Button>
               </Modal.Footer>
             </Modal.Dialog>

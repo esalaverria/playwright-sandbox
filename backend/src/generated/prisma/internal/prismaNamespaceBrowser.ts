@@ -82,6 +82,8 @@ export const UserScalarFieldEnum = {
   passwordHash: 'passwordHash',
   fullName: 'fullName',
   phone: 'phone',
+  defaultCardLimitCents: 'defaultCardLimitCents',
+  primaryCardId: 'primaryCardId',
   locked: 'locked',
   emailVerified: 'emailVerified',
   createdAt: 'createdAt'

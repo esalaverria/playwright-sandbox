@@ -13,9 +13,15 @@ const LABELS: Record<string, string> = {
   CARD_UNFROZEN: 'Unfroze card',
   OVERLIMIT_TOGGLED: 'Updated over-limit setting',
   CARD_DETAILS_VIEWED: 'Viewed full card details',
+  PAYEE_CREATED: 'Added a payee',
+  PAYEE_UPDATED: 'Updated a payee',
+  PAYEE_DELETED: 'Deleted a payee',
 };
 
-function humanMeta(meta: Record<string, unknown> | null): string {
+function humanMeta(
+  meta: Record<string, unknown> | null,
+  accountNameById: Record<string, string>,
+): string {
   if (!meta || Object.keys(meta).length === 0) return '—';
   const parts: string[] = [];
   for (const [k, v] of Object.entries(meta)) {
@@ -27,6 +33,11 @@ function humanMeta(meta: Record<string, unknown> | null): string {
           : k === 'lostAccountId'
             ? 'Previous card'
             : k.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+    if (k.toLowerCase().includes('accountid') && typeof v === 'string') {
+      const nickname = accountNameById[v];
+      parts.push(`${label}: ${nickname ? `${nickname} (${v.slice(0, 10)}…)` : `${v.slice(0, 10)}…`}`);
+      continue;
+    }
     parts.push(`${label}: ${String(v)}`);
   }
   return parts.join(' · ');
@@ -43,6 +54,14 @@ export function ActivityPage() {
       return data.activities;
     },
   });
+  const accounts = useQuery({
+    queryKey: ['accounts'],
+    queryFn: async () => {
+      const { data } = await api.get<{ accounts: { id: string; nickname: string }[] }>('/accounts');
+      return data.accounts;
+    },
+  });
+  const accountNameById = Object.fromEntries((accounts.data ?? []).map((a) => [a.id, a.nickname]));
 
   return (
     <div className="flex flex-col gap-5">
@@ -78,7 +97,7 @@ export function ActivityPage() {
                     </Chip>
                   </td>
                   <td className="align-top px-3 py-3 text-[13px] font-medium leading-relaxed text-neutral-600 md:max-w-xl">
-                    {humanMeta(row.meta)}
+                    {humanMeta(row.meta, accountNameById)}
                   </td>
                 </tr>
               ))}

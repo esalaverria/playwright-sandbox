@@ -5,20 +5,21 @@ Short reference for **business rules** this sandbox implements. Use it when writ
 ## Accounts & balances
 
 - **Checking / savings**: normal deposit accounts; balance must not go negative on outbound debits (unless product says otherwise — here it does not).
-- **Closed accounts** (`closedAt` set): excluded from normal lists; **cannot send or receive** transfers or bill payments from UI flows that validate accounts.
+- **Closed accounts** (`closedAt` set): remain visible in accounts UI as closed/disabled rows; **cannot send or receive** transfers or bill payments.
 - **Frozen deposit**: treated as **blocked** for outbound debits (bill pay, transfers source).
 
 ## Credit cards
 
 - **Active card**: `CREDIT` type, `cardLifecycle = ACTIVE`, not frozen, not closed.
-- **Canceled / lost / frozen credit**: **cannot originate money movement** except where the app exposes a dedicated **pay-down from checking/savings** (`Pay card`) — credit is never a **transfer source** (internal or peer).
-- **Credit cannot be the “From” account** on **Transfer** (between accounts or to another person). Use **Pay card** or **Bill pay** for paying from bank accounts.
-- **Cancel card**: blocked if the card still has **debt** (negative balance / amount owed). User must **pay the balance first**, then cancel.
+- **Canceled / lost / frozen credit**: not usable in transfer flows and excluded from dashboard account cards.
+- **Credit cannot be the “From” account** on **Transfer** and cannot be transfer destination in internal/peer transfer selection.
+- **Primary card**: optional; at most one active card can be marked primary. If that card is cancelled/lost, primary is automatically cleared.
+- **Cancel card**: requires explicit confirmation and card balance must be exactly **$0.00** (cannot cancel with debt or positive balance).
 - **Report lost**: issues a **replacement** card (new PAN/CVV/expiry), keeps **the same balance**, **moves ledger transactions** to the new card, and **closes** the old card.
 
 ## Bill pay
 
-- **Pay from** must be **checking or savings** that is open and not frozen.
+- **Pay from** can be **checking/savings** or **active credit cards**; frozen sources are shown but disabled.
 - **Schedule**: creates a future-dated **scheduled** row; debits only when **Pay now** runs or an instant payment is created.
 - **Pay now (immediate)**: creates an **instant** paid row and debits **immediately** (ledger line on the funding account).
 - **Scheduled row invalid “source”**: if the linked account later becomes unusable (closed/frozen) or funds are insufficient for the scheduled amount, the row is marked **invalid** until the user **edits** and fixes pay-from / amount / date.
@@ -26,16 +27,18 @@ Short reference for **business rules** this sandbox implements. Use it when writ
 
 ## Transfers
 
-- **Internal / peer “From”**: **checking or savings only** (matches backend enforcement).
-- **“To”**: must be allowed to receive (open; credit destinations must be active & not frozen).
+- **Internal / peer “From”**: checking/savings only; frozen/closed sources are not actionable.
+- **Internal “To”**: open checking/savings accounts only (cards excluded).
+- **Peer “To”**: recipient open checking/savings only (cards excluded).
 
 ## Payees
 
-- **Delete** requires **confirmation** in the UI; success is acknowledged with a **toast**.
+- **Edit** supports nickname + reference changes.
+- **Delete** requires confirmation in the UI; success is acknowledged with a toast.
 
 ## Activity log
 
-- Records **profile/security actions** (not the full money ledger). Replacement lost-card events appear as structured metadata.
+- Records profile/security and payee management actions (not the full money ledger). Activity details prefer nickname/context over raw metadata where possible.
 
 ---
 

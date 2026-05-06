@@ -72,6 +72,8 @@ export class TransfersService {
               ? 'Source account is closed.'
               : fromOk.reason === 'frozen'
                 ? 'Source account is frozen.'
+                : fromOk.reason === 'card_inactive'
+                  ? 'Source card is not active.'
                 : 'Source account cannot be used.',
         });
       }
@@ -84,6 +86,8 @@ export class TransfersService {
               ? 'Destination account is closed.'
               : toRecv.reason === 'frozen'
                 ? 'Destination account is frozen.'
+                : toRecv.reason === 'unsupported_type'
+                  ? 'Cards cannot receive transfer credits from this flow.'
                 : 'Destination cannot receive transfers.',
         });
       }
@@ -138,6 +142,19 @@ export class TransfersService {
     }
     if (credit.closedAt) {
       throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Account is closed' });
+    }
+    if (credit.balanceCents >= 0) {
+      throw new BadRequestException({
+        code: 'NO_CARD_DEBT',
+        message: 'This card has no amount owed.',
+      });
+    }
+    const owedCents = Math.max(0, -credit.balanceCents);
+    if (amountCents > owedCents) {
+      throw new BadRequestException({
+        code: 'PAYMENT_EXCEEDS_DEBT',
+        message: 'Payment exceeds what is owed. Reduce the amount or choose another method.',
+      });
     }
     const from = await this.prisma.account.findFirst({ where: { id: fromAccountId, userId } });
     if (!from) throw new NotFoundException('Source account not found');
@@ -203,6 +220,8 @@ export class TransfersService {
               ? 'Source account is closed.'
               : fromOk.reason === 'frozen'
                 ? 'Source account is frozen.'
+                : fromOk.reason === 'card_inactive'
+                  ? 'Source card is not active.'
                 : 'Source account cannot be used.',
         });
       }
@@ -215,6 +234,8 @@ export class TransfersService {
               ? 'Destination account is closed.'
               : toRecv.reason === 'frozen'
                 ? 'Destination account is frozen.'
+                : toRecv.reason === 'unsupported_type'
+                  ? 'Cards cannot receive transfer credits from this flow.'
                 : 'Destination cannot receive transfers.',
         });
       }

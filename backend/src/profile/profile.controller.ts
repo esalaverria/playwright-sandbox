@@ -1,5 +1,5 @@
 import { Body, Controller, Patch, Post, Req, UseGuards } from '@nestjs/common';
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
 import * as bcrypt from 'bcryptjs';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -14,6 +14,11 @@ class PatchMeDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(10000)
+  defaultCardLimitCents?: number;
 }
 
 class PasswordDto {
@@ -38,8 +43,11 @@ export class ProfileController {
       data: {
         ...(dto.fullName !== undefined ? { fullName: dto.fullName.trim() } : {}),
         ...(dto.phone !== undefined ? { phone: dto.phone.trim() || null } : {}),
+        ...(dto.defaultCardLimitCents !== undefined
+          ? { defaultCardLimitCents: dto.defaultCardLimitCents }
+          : {}),
       },
-      select: { id: true, email: true, fullName: true, phone: true },
+      select: { id: true, email: true, fullName: true, phone: true, defaultCardLimitCents: true },
     });
     return { user };
   }

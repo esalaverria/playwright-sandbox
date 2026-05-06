@@ -11,6 +11,8 @@ type Account = {
   nickname: string;
   mask: string;
   balanceCents: number;
+  closedAt?: string | null;
+  cardLifecycle?: string;
 };
 
 export function DashboardPage() {
@@ -81,7 +83,13 @@ export function DashboardPage() {
       </Card.Root>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {(data ?? []).map((a) => (
+        {(data ?? [])
+          .filter(
+            (a) =>
+              !a.closedAt &&
+              (a.type !== 'CREDIT' || a.cardLifecycle === 'ACTIVE'),
+          )
+          .map((a) => (
           <Card.Root key={a.id} className="rounded-2xl border border-neutral-200/80 shadow-sm transition-shadow hover:shadow-md">
             <RouterLink className="block p-6" to={`/accounts/${a.id}`}>
               <p className="text-muted mb-3 text-[10px] font-bold uppercase tracking-[0.12em]">
@@ -92,7 +100,7 @@ export function DashboardPage() {
               <p className="text-primary mt-4 text-sm font-semibold text-indigo-600">View activity →</p>
             </RouterLink>
           </Card.Root>
-        ))}
+          ))}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { LedgerStatus, PaymentStatus, Prisma } from '../generated/prisma/client';
-import { ScheduledPaymentKind } from '../generated/prisma/enums';
+import { AccountType, ScheduledPaymentKind } from '../generated/prisma/enums';
 import { canUseAsDebitSourceForBanking } from '../accounts/account-policy';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -18,6 +18,9 @@ type BillWithFrom = Prisma.ScheduledPaymentGetPayload<{
         closedAt: true;
         frozen: true;
         balanceCents: true;
+        creditLimitCents: true;
+        allowOverLimit: true;
+        cardLifecycle: true;
       };
     };
   };
@@ -26,6 +29,32 @@ type BillWithFrom = Prisma.ScheduledPaymentGetPayload<{
 @Injectable()
 export class BillsService {
   constructor(private prisma: PrismaService) {}
+
+  private assertPayFromHasCapacity(
+    account: {
+      type: string;
+      balanceCents: number;
+      creditLimitCents?: number | null;
+      allowOverLimit?: boolean;
+    },
+    amountCents: number,
+  ) {
+    if (account.balanceCents >= amountCents) return;
+    if (account.type !== AccountType.CREDIT) {
+      throw new BadRequestException({ code: 'INSUFFICIENT_FUNDS', message: 'Insufficient funds' });
+    }
+    const nextDebt = Math.max(0, -(account.balanceCents - amountCents));
+    if (
+      account.creditLimitCents != null &&
+      nextDebt > account.creditLimitCents &&
+      !account.allowOverLimit
+    ) {
+      throw new BadRequestException({
+        code: 'OVER_CREDIT_LIMIT',
+        message: 'Insufficient available credit. Change the payment method.',
+      });
+    }
+  }
 
   private enrichBill(b: BillWithFrom) {
     const src = canUseAsDebitSourceForBanking(b.fromAccount);
@@ -52,6 +81,8 @@ export class BillsService {
       payFromInvalid,
       payFromIssue: payFromIssue ?? null,
       fromAccountNickname: b.fromAccount.nickname,
+      fromAccountType: b.fromAccount.type,
+      fromAccountBalanceCents: b.fromAccount.balanceCents,
     };
   }
 
@@ -68,6 +99,9 @@ export class BillsService {
             closedAt: true,
             frozen: true,
             balanceCents: true,
+            creditLimitCents: true,
+            allowOverLimit: true,
+            cardLifecycle: true,
           },
         },
       },
@@ -95,7 +129,7 @@ export class BillsService {
     if (!src.ok) {
       throw new BadRequestException({
         code: 'INVALID_PAY_FROM',
-        message: 'Choose an open checking or savings account that is not frozen.',
+        message: 'Choose an open account or active card that is not frozen.',
       });
     }
 
@@ -112,9 +146,7 @@ export class BillsService {
     }
 
     if (mode === 'pay_now') {
-      if (acc.balanceCents < dto.amountCents) {
-        throw new BadRequestException({ code: 'INSUFFICIENT_FUNDS', message: 'Insufficient funds' });
-      }
+      this.assertPayFromHasCapacity(acc, dto.amountCents);
       return this.prisma.$transaction(async (tx) => {
         const bill = await tx.scheduledPayment.create({
           data: {
@@ -140,6 +172,9 @@ export class BillsService {
                 closedAt: true,
                 frozen: true,
                 balanceCents: true,
+                creditLimitCents: true,
+                allowOverLimit: true,
+                cardLifecycle: true,
               },
             },
           },
@@ -168,6 +203,9 @@ export class BillsService {
             closedAt: true,
             frozen: true,
             balanceCents: true,
+            creditLimitCents: true,
+            allowOverLimit: true,
+            cardLifecycle: true,
           },
         },
       },
@@ -197,6 +235,9 @@ export class BillsService {
             closedAt: true,
             frozen: true,
             balanceCents: true,
+            creditLimitCents: true,
+            allowOverLimit: true,
+            cardLifecycle: true,
           },
         },
       },
@@ -216,7 +257,7 @@ export class BillsService {
       if (!ok.ok) {
         throw new BadRequestException({
           code: 'INVALID_PAY_FROM',
-          message: 'Choose an open checking or savings account that is not frozen.',
+          message: 'Choose an open account or active card that is not frozen.',
         });
       }
       nextFromId = dto.fromAccountId;
@@ -228,12 +269,7 @@ export class BillsService {
         : existing.fromAccount;
 
     const nextAmount = dto.amountCents ?? existing.amountCents;
-    if (accForFunds.balanceCents < nextAmount) {
-      throw new BadRequestException({
-        code: 'INSUFFICIENT_FUNDS',
-        message: 'Insufficient funds in pay-from account for this amount.',
-      });
-    }
+    this.assertPayFromHasCapacity(accForFunds, nextAmount);
 
     let nextDue = existing.dueDate;
     if (dto.dueDate != null) {
@@ -268,6 +304,9 @@ export class BillsService {
             closedAt: true,
             frozen: true,
             balanceCents: true,
+            creditLimitCents: true,
+            allowOverLimit: true,
+            cardLifecycle: true,
           },
         },
       },
@@ -288,6 +327,9 @@ export class BillsService {
             closedAt: true,
             frozen: true,
             balanceCents: true,
+            creditLimitCents: true,
+            allowOverLimit: true,
+            cardLifecycle: true,
           },
         },
       },
@@ -304,9 +346,7 @@ export class BillsService {
         message: 'Update the pay-from account before paying — it is closed or unavailable.',
       });
     }
-    if (bill.fromAccount.balanceCents < bill.amountCents) {
-      throw new BadRequestException({ code: 'INSUFFICIENT_FUNDS', message: 'Insufficient funds' });
-    }
+    this.assertPayFromHasCapacity(bill.fromAccount, bill.amountCents);
 
     return this.prisma.$transaction(async (tx) => {
       await this.postBillPaymentLedger(tx, bill.fromAccountId, bill.amountCents, bill.billerName);
@@ -322,6 +362,9 @@ export class BillsService {
               closedAt: true,
               frozen: true,
               balanceCents: true,
+              creditLimitCents: true,
+              allowOverLimit: true,
+              cardLifecycle: true,
             },
           },
         },
@@ -337,9 +380,7 @@ export class BillsService {
     billerName: string,
   ) {
     const from = await tx.account.findUniqueOrThrow({ where: { id: fromAccountId } });
-    if (from.balanceCents < amountCents) {
-      throw new BadRequestException({ code: 'INSUFFICIENT_FUNDS', message: 'Insufficient funds' });
-    }
+    this.assertPayFromHasCapacity(from, amountCents);
     const nextBal = from.balanceCents - amountCents;
     await tx.account.update({
       where: { id: from.id },

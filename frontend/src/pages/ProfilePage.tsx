@@ -8,7 +8,14 @@ export function ProfilePage() {
   const me = useQuery({
     queryKey: ['me'],
     queryFn: async () => {
-      const { data } = await api.get<{ user: { email: string; fullName: string; phone: string | null } }>(
+      const { data } = await api.get<{
+        user: {
+          email: string;
+          fullName: string;
+          phone: string | null;
+          defaultCardLimitCents: number;
+        };
+      }>(
         '/auth/me',
       );
       return data.user!;
@@ -16,7 +23,8 @@ export function ProfilePage() {
   });
 
   const patch = useMutation({
-    mutationFn: async (payload: { fullName?: string; phone?: string }) => api.patch('/me', payload),
+    mutationFn: async (payload: { fullName?: string; phone?: string; defaultCardLimitCents?: number }) =>
+      api.patch('/me', payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['me'] }),
   });
 
@@ -38,6 +46,7 @@ export function ProfilePage() {
             patch.mutate({
               fullName: String(fd.get('fullName') ?? ''),
               phone: String(fd.get('phone') ?? ''),
+              defaultCardLimitCents: Math.round(Number(fd.get('defaultCardLimit') ?? 5000) * 100),
             });
           }}
         >
@@ -52,6 +61,20 @@ export function ProfilePage() {
           <div>
             <Label className="mb-2 inline-block font-medium">Email</Label>
             <Input value={me.data?.email ?? ''} readOnly className="mt-0 w-full rounded-xl border px-4 py-2.5 opacity-80" />
+          </div>
+          <div>
+            <Label htmlFor="default-card-limit" className="mb-2 inline-block font-medium">
+              New card limit (USD)
+            </Label>
+            <Input
+              id="default-card-limit"
+              name="defaultCardLimit"
+              type="number"
+              min={100}
+              step={100}
+              defaultValue={((me.data?.defaultCardLimitCents ?? 500000) / 100).toFixed(0)}
+              className="mt-0 w-full rounded-xl border px-4 py-2.5"
+            />
           </div>
           <Button type="submit" variant="primary" isDisabled={patch.isPending}>
             Save

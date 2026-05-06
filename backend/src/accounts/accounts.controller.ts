@@ -26,6 +26,12 @@ class AllowOverLimitDto {
   allowOverLimit!: boolean;
 }
 
+class PrimaryCardDto {
+  @IsOptional()
+  @IsString()
+  accountId?: string | null;
+}
+
 class CreateAccountDto {
   @IsIn([AccountType.CHECKING, AccountType.SAVINGS])
   type!: AccountType;
@@ -184,5 +190,13 @@ export class AccountsController {
     @Body() dto: AllowOverLimitDto,
   ) {
     return this.accounts.setAllowOverLimit(req.user.userId, id, dto.allowOverLimit);
+  }
+
+  @Patch('primary-card')
+  async primaryCard(
+    @Req() req: Request & { user: { userId: string } },
+    @Body() dto: PrimaryCardDto,
+  ) {
+    return this.accounts.setPrimaryCard(req.user.userId, dto.accountId ?? null);
   }
 }

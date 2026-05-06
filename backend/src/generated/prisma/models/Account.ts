@@ -351,6 +351,7 @@ export type AccountWhereInput = {
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   ledgerEntries?: Prisma.LedgerEntryListRelationFilter
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentListRelationFilter
+  primaryForUsers?: Prisma.UserListRelationFilter
 }
 
 export type AccountOrderByWithRelationInput = {
@@ -377,6 +378,7 @@ export type AccountOrderByWithRelationInput = {
   user?: Prisma.UserOrderByWithRelationInput
   ledgerEntries?: Prisma.LedgerEntryOrderByRelationAggregateInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentOrderByRelationAggregateInput
+  primaryForUsers?: Prisma.UserOrderByRelationAggregateInput
 }
 
 export type AccountWhereUniqueInput = Prisma.AtLeast<{
@@ -406,6 +408,7 @@ export type AccountWhereUniqueInput = Prisma.AtLeast<{
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   ledgerEntries?: Prisma.LedgerEntryListRelationFilter
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentListRelationFilter
+  primaryForUsers?: Prisma.UserListRelationFilter
 }, "id">
 
 export type AccountOrderByWithAggregationInput = {
@@ -485,6 +488,7 @@ export type AccountCreateInput = {
   user: Prisma.UserCreateNestedOneWithoutAccountsInput
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentCreateNestedManyWithoutFromAccountInput
+  primaryForUsers?: Prisma.UserCreateNestedManyWithoutPrimaryCardInput
 }
 
 export type AccountUncheckedCreateInput = {
@@ -510,6 +514,7 @@ export type AccountUncheckedCreateInput = {
   nameOnCard?: string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
+  primaryForUsers?: Prisma.UserUncheckedCreateNestedManyWithoutPrimaryCardInput
 }
 
 export type AccountUpdateInput = {
@@ -535,6 +540,7 @@ export type AccountUpdateInput = {
   user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUpdateManyWithoutFromAccountNestedInput
+  primaryForUsers?: Prisma.UserUpdateManyWithoutPrimaryCardNestedInput
 }
 
 export type AccountUncheckedUpdateInput = {
@@ -560,6 +566,7 @@ export type AccountUncheckedUpdateInput = {
   nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
+  primaryForUsers?: Prisma.UserUncheckedUpdateManyWithoutPrimaryCardNestedInput
 }
 
 export type AccountCreateManyInput = {
@@ -628,6 +635,11 @@ export type AccountUncheckedUpdateManyInput = {
   expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type AccountNullableScalarRelationFilter = {
+  is?: Prisma.AccountWhereInput | null
+  isNot?: Prisma.AccountWhereInput | null
 }
 
 export type AccountListRelationFilter = {
@@ -728,6 +740,12 @@ export type AccountScalarRelationFilter = {
   isNot?: Prisma.AccountWhereInput
 }
 
+export type AccountCreateNestedOneWithoutPrimaryForUsersInput = {
+  create?: Prisma.XOR<Prisma.AccountCreateWithoutPrimaryForUsersInput, Prisma.AccountUncheckedCreateWithoutPrimaryForUsersInput>
+  connectOrCreate?: Prisma.AccountCreateOrConnectWithoutPrimaryForUsersInput
+  connect?: Prisma.AccountWhereUniqueInput
+}
+
 export type AccountCreateNestedManyWithoutUserInput = {
   create?: Prisma.XOR<Prisma.AccountCreateWithoutUserInput, Prisma.AccountUncheckedCreateWithoutUserInput> | Prisma.AccountCreateWithoutUserInput[] | Prisma.AccountUncheckedCreateWithoutUserInput[]
   connectOrCreate?: Prisma.AccountCreateOrConnectWithoutUserInput | Prisma.AccountCreateOrConnectWithoutUserInput[]
@@ -740,6 +758,16 @@ export type AccountUncheckedCreateNestedManyWithoutUserInput = {
   connectOrCreate?: Prisma.AccountCreateOrConnectWithoutUserInput | Prisma.AccountCreateOrConnectWithoutUserInput[]
   createMany?: Prisma.AccountCreateManyUserInputEnvelope
   connect?: Prisma.AccountWhereUniqueInput | Prisma.AccountWhereUniqueInput[]
+}
+
+export type AccountUpdateOneWithoutPrimaryForUsersNestedInput = {
+  create?: Prisma.XOR<Prisma.AccountCreateWithoutPrimaryForUsersInput, Prisma.AccountUncheckedCreateWithoutPrimaryForUsersInput>
+  connectOrCreate?: Prisma.AccountCreateOrConnectWithoutPrimaryForUsersInput
+  upsert?: Prisma.AccountUpsertWithoutPrimaryForUsersInput
+  disconnect?: Prisma.AccountWhereInput | boolean
+  delete?: Prisma.AccountWhereInput | boolean
+  connect?: Prisma.AccountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AccountUpdateToOneWithWhereWithoutPrimaryForUsersInput, Prisma.AccountUpdateWithoutPrimaryForUsersInput>, Prisma.AccountUncheckedUpdateWithoutPrimaryForUsersInput>
 }
 
 export type AccountUpdateManyWithoutUserNestedInput = {
@@ -772,14 +800,6 @@ export type AccountUncheckedUpdateManyWithoutUserNestedInput = {
 
 export type EnumAccountTypeFieldUpdateOperationsInput = {
   set?: $Enums.AccountType
-}
-
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type NullableIntFieldUpdateOperationsInput = {
@@ -830,6 +850,61 @@ export type AccountUpdateOneRequiredWithoutScheduledPaymentsFromNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AccountUpdateToOneWithWhereWithoutScheduledPaymentsFromInput, Prisma.AccountUpdateWithoutScheduledPaymentsFromInput>, Prisma.AccountUncheckedUpdateWithoutScheduledPaymentsFromInput>
 }
 
+export type AccountCreateWithoutPrimaryForUsersInput = {
+  id?: string
+  type: $Enums.AccountType
+  nickname: string
+  mask: string
+  currency?: string
+  balanceCents?: number
+  frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
+  createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
+  user: Prisma.UserCreateNestedOneWithoutAccountsInput
+  ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
+  scheduledPaymentsFrom?: Prisma.ScheduledPaymentCreateNestedManyWithoutFromAccountInput
+}
+
+export type AccountUncheckedCreateWithoutPrimaryForUsersInput = {
+  id?: string
+  userId: string
+  type: $Enums.AccountType
+  nickname: string
+  mask: string
+  currency?: string
+  balanceCents?: number
+  frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
+  createdAt?: Date | string
+  closedAt?: Date | string | null
+  accountNumberFull?: string | null
+  cardBrand?: $Enums.CardBrand | null
+  cardLifecycle?: $Enums.CardLifecycleStatus
+  panFull?: string | null
+  cvv?: string | null
+  expMonth?: number | null
+  expYear?: number | null
+  nameOnCard?: string | null
+  ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
+  scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
+}
+
+export type AccountCreateOrConnectWithoutPrimaryForUsersInput = {
+  where: Prisma.AccountWhereUniqueInput
+  create: Prisma.XOR<Prisma.AccountCreateWithoutPrimaryForUsersInput, Prisma.AccountUncheckedCreateWithoutPrimaryForUsersInput>
+}
+
 export type AccountCreateWithoutUserInput = {
   id?: string
   type: $Enums.AccountType
@@ -852,6 +927,7 @@ export type AccountCreateWithoutUserInput = {
   nameOnCard?: string | null
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentCreateNestedManyWithoutFromAccountInput
+  primaryForUsers?: Prisma.UserCreateNestedManyWithoutPrimaryCardInput
 }
 
 export type AccountUncheckedCreateWithoutUserInput = {
@@ -876,6 +952,7 @@ export type AccountUncheckedCreateWithoutUserInput = {
   nameOnCard?: string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
+  primaryForUsers?: Prisma.UserUncheckedCreateNestedManyWithoutPrimaryCardInput
 }
 
 export type AccountCreateOrConnectWithoutUserInput = {
@@ -886,6 +963,67 @@ export type AccountCreateOrConnectWithoutUserInput = {
 export type AccountCreateManyUserInputEnvelope = {
   data: Prisma.AccountCreateManyUserInput | Prisma.AccountCreateManyUserInput[]
   skipDuplicates?: boolean
+}
+
+export type AccountUpsertWithoutPrimaryForUsersInput = {
+  update: Prisma.XOR<Prisma.AccountUpdateWithoutPrimaryForUsersInput, Prisma.AccountUncheckedUpdateWithoutPrimaryForUsersInput>
+  create: Prisma.XOR<Prisma.AccountCreateWithoutPrimaryForUsersInput, Prisma.AccountUncheckedCreateWithoutPrimaryForUsersInput>
+  where?: Prisma.AccountWhereInput
+}
+
+export type AccountUpdateToOneWithWhereWithoutPrimaryForUsersInput = {
+  where?: Prisma.AccountWhereInput
+  data: Prisma.XOR<Prisma.AccountUpdateWithoutPrimaryForUsersInput, Prisma.AccountUncheckedUpdateWithoutPrimaryForUsersInput>
+}
+
+export type AccountUpdateWithoutPrimaryForUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumAccountTypeFieldUpdateOperationsInput | $Enums.AccountType
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  mask?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
+  frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
+  ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
+  scheduledPaymentsFrom?: Prisma.ScheduledPaymentUpdateManyWithoutFromAccountNestedInput
+}
+
+export type AccountUncheckedUpdateWithoutPrimaryForUsersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumAccountTypeFieldUpdateOperationsInput | $Enums.AccountType
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  mask?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
+  frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accountNumberFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cardBrand?: Prisma.NullableEnumCardBrandFieldUpdateOperationsInput | $Enums.CardBrand | null
+  cardLifecycle?: Prisma.EnumCardLifecycleStatusFieldUpdateOperationsInput | $Enums.CardLifecycleStatus
+  panFull?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cvv?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  expMonth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
+  scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
 }
 
 export type AccountUpsertWithWhereUniqueWithoutUserInput = {
@@ -952,6 +1090,7 @@ export type AccountCreateWithoutLedgerEntriesInput = {
   nameOnCard?: string | null
   user: Prisma.UserCreateNestedOneWithoutAccountsInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentCreateNestedManyWithoutFromAccountInput
+  primaryForUsers?: Prisma.UserCreateNestedManyWithoutPrimaryCardInput
 }
 
 export type AccountUncheckedCreateWithoutLedgerEntriesInput = {
@@ -976,6 +1115,7 @@ export type AccountUncheckedCreateWithoutLedgerEntriesInput = {
   expYear?: number | null
   nameOnCard?: string | null
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
+  primaryForUsers?: Prisma.UserUncheckedCreateNestedManyWithoutPrimaryCardInput
 }
 
 export type AccountCreateOrConnectWithoutLedgerEntriesInput = {
@@ -1016,6 +1156,7 @@ export type AccountUpdateWithoutLedgerEntriesInput = {
   nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUpdateManyWithoutFromAccountNestedInput
+  primaryForUsers?: Prisma.UserUpdateManyWithoutPrimaryCardNestedInput
 }
 
 export type AccountUncheckedUpdateWithoutLedgerEntriesInput = {
@@ -1040,6 +1181,7 @@ export type AccountUncheckedUpdateWithoutLedgerEntriesInput = {
   expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
+  primaryForUsers?: Prisma.UserUncheckedUpdateManyWithoutPrimaryCardNestedInput
 }
 
 export type AccountCreateWithoutScheduledPaymentsFromInput = {
@@ -1064,6 +1206,7 @@ export type AccountCreateWithoutScheduledPaymentsFromInput = {
   nameOnCard?: string | null
   user: Prisma.UserCreateNestedOneWithoutAccountsInput
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
+  primaryForUsers?: Prisma.UserCreateNestedManyWithoutPrimaryCardInput
 }
 
 export type AccountUncheckedCreateWithoutScheduledPaymentsFromInput = {
@@ -1088,6 +1231,7 @@ export type AccountUncheckedCreateWithoutScheduledPaymentsFromInput = {
   expYear?: number | null
   nameOnCard?: string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
+  primaryForUsers?: Prisma.UserUncheckedCreateNestedManyWithoutPrimaryCardInput
 }
 
 export type AccountCreateOrConnectWithoutScheduledPaymentsFromInput = {
@@ -1128,6 +1272,7 @@ export type AccountUpdateWithoutScheduledPaymentsFromInput = {
   nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
+  primaryForUsers?: Prisma.UserUpdateManyWithoutPrimaryCardNestedInput
 }
 
 export type AccountUncheckedUpdateWithoutScheduledPaymentsFromInput = {
@@ -1152,6 +1297,7 @@ export type AccountUncheckedUpdateWithoutScheduledPaymentsFromInput = {
   expYear?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
+  primaryForUsers?: Prisma.UserUncheckedUpdateManyWithoutPrimaryCardNestedInput
 }
 
 export type AccountCreateManyUserInput = {
@@ -1198,6 +1344,7 @@ export type AccountUpdateWithoutUserInput = {
   nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUpdateManyWithoutFromAccountNestedInput
+  primaryForUsers?: Prisma.UserUpdateManyWithoutPrimaryCardNestedInput
 }
 
 export type AccountUncheckedUpdateWithoutUserInput = {
@@ -1222,6 +1369,7 @@ export type AccountUncheckedUpdateWithoutUserInput = {
   nameOnCard?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
+  primaryForUsers?: Prisma.UserUncheckedUpdateManyWithoutPrimaryCardNestedInput
 }
 
 export type AccountUncheckedUpdateManyWithoutUserInput = {
@@ -1254,11 +1402,13 @@ export type AccountUncheckedUpdateManyWithoutUserInput = {
 export type AccountCountOutputType = {
   ledgerEntries: number
   scheduledPaymentsFrom: number
+  primaryForUsers: number
 }
 
 export type AccountCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   ledgerEntries?: boolean | AccountCountOutputTypeCountLedgerEntriesArgs
   scheduledPaymentsFrom?: boolean | AccountCountOutputTypeCountScheduledPaymentsFromArgs
+  primaryForUsers?: boolean | AccountCountOutputTypeCountPrimaryForUsersArgs
 }
 
 /**
@@ -1283,6 +1433,13 @@ export type AccountCountOutputTypeCountLedgerEntriesArgs<ExtArgs extends runtime
  */
 export type AccountCountOutputTypeCountScheduledPaymentsFromArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ScheduledPaymentWhereInput
+}
+
+/**
+ * AccountCountOutputType without action
+ */
+export type AccountCountOutputTypeCountPrimaryForUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
 }
 
 
@@ -1310,6 +1467,7 @@ export type AccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ledgerEntries?: boolean | Prisma.Account$ledgerEntriesArgs<ExtArgs>
   scheduledPaymentsFrom?: boolean | Prisma.Account$scheduledPaymentsFromArgs<ExtArgs>
+  primaryForUsers?: boolean | Prisma.Account$primaryForUsersArgs<ExtArgs>
   _count?: boolean | Prisma.AccountCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["account"]>
 
@@ -1389,6 +1547,7 @@ export type AccountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ledgerEntries?: boolean | Prisma.Account$ledgerEntriesArgs<ExtArgs>
   scheduledPaymentsFrom?: boolean | Prisma.Account$scheduledPaymentsFromArgs<ExtArgs>
+  primaryForUsers?: boolean | Prisma.Account$primaryForUsersArgs<ExtArgs>
   _count?: boolean | Prisma.AccountCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AccountIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1404,6 +1563,7 @@ export type $AccountPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     user: Prisma.$UserPayload<ExtArgs>
     ledgerEntries: Prisma.$LedgerEntryPayload<ExtArgs>[]
     scheduledPaymentsFrom: Prisma.$ScheduledPaymentPayload<ExtArgs>[]
+    primaryForUsers: Prisma.$UserPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1829,6 +1989,7 @@ export interface Prisma__AccountClient<T, Null = never, ExtArgs extends runtime.
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   ledgerEntries<T extends Prisma.Account$ledgerEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$ledgerEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LedgerEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   scheduledPaymentsFrom<T extends Prisma.Account$scheduledPaymentsFromArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$scheduledPaymentsFromArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ScheduledPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  primaryForUsers<T extends Prisma.Account$primaryForUsersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Account$primaryForUsersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2324,6 +2485,30 @@ export type Account$scheduledPaymentsFromArgs<ExtArgs extends runtime.Types.Exte
   take?: number
   skip?: number
   distinct?: Prisma.ScheduledPaymentScalarFieldEnum | Prisma.ScheduledPaymentScalarFieldEnum[]
+}
+
+/**
+ * Account.primaryForUsers
+ */
+export type Account$primaryForUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
 }
 
 /**

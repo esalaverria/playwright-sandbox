@@ -16,6 +16,7 @@ type AccountRow = {
   balanceCents: number;
   accountNumberFull: string | null;
   cardLifecycle?: string | null;
+  closedAt?: string | null;
 };
 
 const selectFull =
@@ -37,6 +38,10 @@ export function AccountsPage() {
   const [cardBrand, setCardBrand] = useState<'VISA' | 'MASTERCARD'>('VISA');
   const [transferTo, setTransferTo] = useState('');
   const [revealAcct, setRevealAcct] = useState<Record<string, boolean>>({});
+  const [showClosed, setShowClosed] = useState(true);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
   const newModal = useOverlayState({ isOpen: openNew, onOpenChange: setOpenNew });
   const cardModal = useOverlayState({ isOpen: openCard, onOpenChange: setOpenCard });
@@ -110,6 +115,16 @@ export function AccountsPage() {
   });
 
   const depositAccounts = (accounts.data ?? []).filter((a) => a.type === 'CHECKING' || a.type === 'SAVINGS');
+  const sortedAccounts = [...depositAccounts].sort((a, b) => {
+    if (!!a.closedAt !== !!b.closedAt) return a.closedAt ? 1 : -1;
+    return a.nickname.localeCompare(b.nickname);
+  });
+  const filteredAccounts = sortedAccounts.filter((a) =>
+    a.nickname.toLowerCase().includes(query.toLowerCase()),
+  );
+  const displayAccounts = filteredAccounts.filter((a) => showClosed || !a.closedAt);
+  const pagedAccounts = displayAccounts.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.max(1, Math.ceil(displayAccounts.length / pageSize));
 
   const closingRow = closeId ? depositAccounts.find((a) => a.id === closeId) : null;
   const destinations = depositAccounts.filter((a) => a.id !== closeId);
@@ -136,6 +151,26 @@ export function AccountsPage() {
       </div>
 
       <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-3">
+          <Input
+            value={query}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Filter by nickname"
+            className="max-w-xs rounded-xl border px-3 py-2"
+          />
+          <label className="text-sm text-neutral-700">
+            <input
+              type="checkbox"
+              checked={showClosed}
+              onChange={(e) => setShowClosed(e.target.checked)}
+              className="mr-2"
+            />
+            Show closed
+          </label>
+        </div>
         <div className="-mx-2 overflow-x-auto sm:mx-0">
           <table className="w-full min-w-[720px] text-sm">
             <thead>
@@ -148,11 +183,16 @@ export function AccountsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {depositAccounts.map((a) => (
-                <tr key={a.id} className="hover:bg-neutral-50/80">
+              {pagedAccounts.map((a) => (
+                <tr key={a.id} className={`hover:bg-neutral-50/80 ${a.closedAt ? 'opacity-55' : ''}`}>
                   <td className="px-4 py-3">
                     <p className="font-bold text-neutral-900">{a.nickname}</p>
                     <p className="text-xs font-medium text-neutral-500">{a.mask}</p>
+                    {a.closedAt ? (
+                      <Chip size="sm" color="default" variant="secondary" className="mt-1">
+                        <Chip.Label>Closed</Chip.Label>
+                      </Chip>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3">
                     <Chip variant="secondary" color="default" size="sm">
@@ -181,7 +221,7 @@ export function AccountsPage() {
                       <RouterLink to={`/accounts/${a.id}`} className={linkOutline}>
                         Activity
                       </RouterLink>
-                      <Button variant="danger-soft" size="sm" onPress={() => setCloseId(a.id)}>
+                      <Button variant="danger-soft" size="sm" onPress={() => setCloseId(a.id)} isDisabled={!!a.closedAt}>
                         Close
                       </Button>
                     </div>
@@ -191,6 +231,22 @@ export function AccountsPage() {
             </tbody>
           </table>
         </div>
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        <Button variant="outline" size="sm" isDisabled={page <= 1} onPress={() => setPage((p) => p - 1)}>
+          Previous
+        </Button>
+        <span className="text-sm text-neutral-600">
+          Page {page} / {totalPages}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          isDisabled={page >= totalPages}
+          onPress={() => setPage((p) => p + 1)}
+        >
+          Next
+        </Button>
       </div>
 
       <Modal state={newModal}>

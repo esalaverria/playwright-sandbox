@@ -6,7 +6,16 @@ import { usePrivacy } from '../privacy/PrivacyProvider';
 import { useToast } from '../notifications/ToastProvider';
 import { CurrencyTextField } from '../ui/CurrencyTextField';
 
-type Account = { id: string; nickname: string; mask: string; type: string; balanceCents: number };
+type Account = {
+  id: string;
+  nickname: string;
+  mask: string;
+  type: string;
+  balanceCents: number;
+  closedAt?: string | null;
+  frozen?: boolean;
+  cardLifecycle?: string;
+};
 
 type TabKey = 'internal' | 'peer';
 
@@ -26,7 +35,17 @@ export function TransferPage() {
     },
   });
 
-  const fromAccounts = (accounts ?? []).filter((a) => a.type === 'CHECKING' || a.type === 'SAVINGS');
+  const fromAccounts = (accounts ?? []).filter(
+    (a) =>
+      (a.type === 'CHECKING' || a.type === 'SAVINGS') &&
+      !a.closedAt,
+  );
+  const internalToAccounts = (accounts ?? []).filter(
+    (a) =>
+      (a.type === 'CHECKING' || a.type === 'SAVINGS') &&
+      !a.closedAt &&
+      !a.frozen,
+  );
 
   const internal = useMutation({
     mutationFn: async (payload: {
@@ -71,7 +90,7 @@ export function TransferPage() {
     queryFn: async () => {
       const { data } = await api.get<{
         userExists: boolean;
-        accounts: { id: string; mask: string; type: string; nickname: string }[];
+        accounts: { id: string; mask: string; type: string; nickname: string; balanceCents: number }[];
       }>('/recipients/preview', { params: { email: peerEmail } });
       return data;
     },
@@ -139,8 +158,8 @@ export function TransferPage() {
                   Select account
                 </option>
                 {fromAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.nickname} ({formatMoney(a.balanceCents)})
+                  <option key={a.id} value={a.id} disabled={!!a.frozen}>
+                    {a.nickname} ({formatMoney(a.balanceCents)}) {a.frozen ? '· Frozen' : ''}
                   </option>
                 ))}
               </select>
@@ -151,9 +170,9 @@ export function TransferPage() {
                 <option value="" disabled>
                   Select account
                 </option>
-                {(accounts ?? []).map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.nickname}
+                {internalToAccounts.map((a) => (
+                  <option key={a.id} value={a.id} disabled={!!a.frozen}>
+                    {a.nickname} ({formatMoney(a.balanceCents)}) {a.frozen ? '· Frozen' : ''}
                   </option>
                 ))}
               </select>
@@ -221,7 +240,7 @@ export function TransferPage() {
               >
                 {peerAccounts.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.nickname} {a.mask} · {a.type}
+                    {a.nickname} {a.mask} · {a.type} · {formatMoney(a.balanceCents)}
                   </option>
                 ))}
               </select>
