@@ -134,13 +134,13 @@ export function CardsPage() {
         brand: cardBrand,
       }),
     onSuccess: async () => {
-      toast('New card added to your wallet.');
+      toast('New credit card added to your wallet.');
       setOpenNewCard(false);
       setCardNick('');
       await qc.invalidateQueries({ queryKey: ['accounts'] });
       await qc.invalidateQueries({ queryKey: ['activity-log'] });
     },
-    onError: (e) => toast(apiErrorMessage(e, 'Could not add card.'), 'error'),
+    onError: (e) => toast(apiErrorMessage(e, 'Could not add credit card.'), 'error'),
   });
 
   const toggleFreeze = useMutation({
@@ -238,7 +238,7 @@ export function CardsPage() {
         </div>
         <Button variant="primary" className="shrink-0 self-stretch sm:self-center" onPress={() => setOpenNewCard(true)}>
           <Plus aria-hidden className="mr-2 size-5" strokeWidth={2.25} />
-          Add new card
+          Request credit card
         </Button>
       </div>
 
@@ -279,16 +279,18 @@ export function CardsPage() {
                     <Chip variant="secondary" color="default" size="sm">
                       <Chip.Label>{brand}</Chip.Label>
                     </Chip>
-                    <Chip
-                      variant={isActive ? 'soft' : 'secondary'}
-                      color={isActive ? 'success' : 'default'}
-                      size="sm"
-                    >
-                      <Chip.Label>{c.cardLifecycle.replace(/_/g, ' ')}</Chip.Label>
-                    </Chip>
+                    {!c.frozen ? (
+                      <Chip
+                        variant={isActive ? 'soft' : 'secondary'}
+                        color={isActive ? 'success' : 'default'}
+                        size="sm"
+                      >
+                        <Chip.Label>{c.cardLifecycle.replace(/_/g, ' ')}</Chip.Label>
+                      </Chip>
+                    ) : null}
                     {c.frozen ? (
                       <Chip variant="soft" color="warning" size="sm">
-                        <Chip.Label>Frozen</Chip.Label>
+                        <Chip.Label>FROZEN</Chip.Label>
                       </Chip>
                     ) : null}
                   </div>
@@ -607,7 +609,7 @@ export function CardsPage() {
             <Modal.Dialog>
               <Modal.CloseTrigger aria-label="Close dialog" />
               <Modal.Header>
-                <Modal.Heading>Add new card</Modal.Heading>
+                <Modal.Heading>Request a credit card</Modal.Heading>
               </Modal.Header>
               <Modal.Body className="flex flex-col gap-4">
                 <div>
@@ -648,7 +650,7 @@ export function CardsPage() {
 
       {creditCards.length === 0 ? (
         <p className="text-sm font-medium text-neutral-600">
-          No credit accounts yet — use Add new card above or open one under Accounts.
+          No credit accounts yet — use Request credit card above or open one under Accounts.
         </p>
       ) : null}
     </div>

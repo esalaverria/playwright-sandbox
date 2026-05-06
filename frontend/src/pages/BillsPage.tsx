@@ -7,7 +7,6 @@ import { useToast } from '../notifications/ToastProvider';
 import { usePrivacy } from '../privacy/PrivacyProvider';
 import { CurrencyTextField } from '../ui/CurrencyTextField';
 import { AccountSelect } from '../ui/AccountSelect';
-import { formatAccountOptionLabel } from '../ui/account-option-label';
 import {
   findMatchedPayeeForHint,
   PayeeAutocomplete,
@@ -74,6 +73,7 @@ export function BillsPage() {
           mask: string;
           type: string;
           balanceCents: number;
+          creditLimitCents?: number | null;
           closedAt?: string | null;
           frozen?: boolean;
           cardLifecycle?: string;
@@ -96,16 +96,10 @@ export function BillsPage() {
     () =>
       payFromAccounts.map((a) => ({
         id: a.id,
-        label: formatAccountOptionLabel(
-          {
-            nickname: a.nickname,
-            mask: a.mask,
-            type: a.type,
-            balanceCents: a.balanceCents,
-            frozen: a.frozen,
-          },
-          formatMoney,
-        ),
+        label:
+          a.type === 'CREDIT'
+            ? `${a.nickname} ${a.mask} · ${a.type} · Available ${formatMoney(Math.max(0, (a.creditLimitCents ?? 0) - Math.max(0, -a.balanceCents)))}${a.frozen ? ' · Frozen' : ''}`
+            : `${a.nickname} ${a.mask} · ${a.type} · ${formatMoney(a.balanceCents)}${a.frozen ? ' · Frozen' : ''}`,
         disabled: !!a.frozen,
       })),
     [payFromAccounts, formatMoney],

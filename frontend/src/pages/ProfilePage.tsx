@@ -47,7 +47,6 @@ export function ProfilePage() {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
             patch.mutate({
-              fullName: String(fd.get('fullName') ?? ''),
               phone: String(fd.get('phone') ?? ''),
               defaultCardLimitCents: Math.round(Number(fd.get('defaultCardLimit') ?? 5000) * 100),
             });

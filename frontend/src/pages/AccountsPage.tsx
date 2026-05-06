@@ -1,4 +1,4 @@
-import { Button, Chip, Input, Label, Modal, useOverlayState } from '@heroui/react';
+import { Button, Chip, Input, Label, Modal, Switch, useOverlayState } from '@heroui/react';
 import { Wallet, Plus } from 'lucide-react';
 import type { ChangeEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -87,13 +87,13 @@ export function AccountsPage() {
         brand: cardBrand,
       }),
     onSuccess: async () => {
-      toast('New card on the way — added to your wallet.');
+      toast('New credit card on the way — added to your wallet.');
       setOpenCard(false);
       setCardNick('');
       await qc.invalidateQueries({ queryKey: ['accounts'] });
       await qc.invalidateQueries({ queryKey: ['activity-log'] });
     },
-    onError: () => toast('Could not request card', 'error'),
+    onError: () => toast('Could not request credit card', 'error'),
   });
 
   const closeAcc = useMutation({
@@ -173,15 +173,14 @@ export function AccountsPage() {
             placeholder="Filter by nickname"
             className="max-w-xs rounded-xl border px-3 py-2"
           />
-          <label className="text-sm text-neutral-700">
-            <input
-              type="checkbox"
-              checked={showClosed}
-              onChange={(e) => setShowClosed(e.target.checked)}
-              className="mr-2"
-            />
-            Show closed
-          </label>
+          <Switch isSelected={showClosed} onChange={setShowClosed}>
+            <Switch.Content>
+              <span className="text-sm text-neutral-700">Show closed</span>
+            </Switch.Content>
+            <Switch.Control>
+              <Switch.Thumb />
+            </Switch.Control>
+          </Switch>
         </div>
         <div className="-mx-2 overflow-x-auto sm:mx-0">
           <table className="w-full min-w-[720px] text-sm">

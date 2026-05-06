@@ -60,7 +60,6 @@ export function PayeesPage() {
     mutationFn: async (payload: { id: string; nickname: string; externalRef: string }) =>
       api.patch(`/payees/${payload.id}`, {
         nickname: payload.nickname,
-        externalRef: payload.externalRef,
       }),
     onSuccess: () => {
       toast('Payee updated.');
