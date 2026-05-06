@@ -94,7 +94,7 @@ export function AppLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-fuchsia-50/40 to-indigo-50/80">
-      <header className="fixed left-0 right-0 top-0 z-[100] flex h-14 shrink-0 items-center gap-2 border-b border-violet-400/25 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 px-4 shadow-sm shadow-violet-500/15">
+      <header className="fixed left-0 right-0 top-0 z-[100] flex h-14 shrink-0 items-center gap-2 border-b border-white/10 bg-black px-4 shadow-sm shadow-black/30">
         <h1 className="flex flex-1 text-lg font-bold tracking-tight text-white">NorthPeak</h1>
         <Button
           variant="ghost"

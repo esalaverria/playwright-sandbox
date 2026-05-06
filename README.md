@@ -16,6 +16,8 @@
 
 > **Why this exists:** It’s much easier to learn test automation when the app has real workflows, state, and edge cases. This repo gives you that—without needing production infrastructure. 🙂
 
+> **Friendly heads-up:** There are a few intentional bugs hiding in this sandbox for testing practice. One hint to start: the transactions page for closed accounts is currently not working 😕 Happy bug hunting - see what else you can find! 🔎
+
 ---
 
 Monorepo layout:
