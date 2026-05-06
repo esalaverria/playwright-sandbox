@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { LedgerStatus, Prisma } from '../generated/prisma/client';
+import { AccountType, Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -23,6 +23,8 @@ export class AccountsService {
         currency: true,
         balanceCents: true,
         frozen: true,
+        creditLimitCents: true,
+        allowOverLimit: true,
       },
     });
   }
@@ -36,32 +38,49 @@ export class AccountsService {
   async transactions(
     userId: string,
     accountId: string,
-    opts: { take: number; cursor?: string; q?: string },
+    opts: {
+      page: number;
+      pageSize: number;
+      q?: string;
+      from?: string;
+      to?: string;
+    },
   ) {
     await this.assertOwnAccount(userId, accountId);
     const where: Prisma.LedgerEntryWhereInput = { accountId };
     if (opts.q?.trim()) {
       where.description = { contains: opts.q.trim(), mode: 'insensitive' };
     }
-    const entries = await this.prisma.ledgerEntry.findMany({
-      where,
-      orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
-      take: opts.take + 1,
-      ...(opts.cursor
-        ? {
-            cursor: { id: opts.cursor },
-            skip: 1,
-          }
-        : {}),
-    });
-    let nextCursor: string | null = null;
-    let items = entries;
-    if (entries.length > opts.take) {
-      const next = entries.pop()!;
-      nextCursor = next.id;
-      items = entries;
+    const occurred: Prisma.DateTimeFilter = {};
+    if (opts.from) {
+      occurred.gte = new Date(opts.from + 'T00:00:00.000Z');
     }
-    return { items, nextCursor };
+    if (opts.to) {
+      occurred.lte = new Date(opts.to + 'T23:59:59.999Z');
+    }
+    if (Object.keys(occurred).length) {
+      where.occurredAt = occurred;
+    }
+
+    const skip = (opts.page - 1) * opts.pageSize;
+    const [items, total] = await Promise.all([
+      this.prisma.ledgerEntry.findMany({
+        where,
+        orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
+        skip,
+        take: opts.pageSize,
+      }),
+      this.prisma.ledgerEntry.count({ where }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / opts.pageSize));
+    return {
+      items,
+      total,
+      page: opts.page,
+      pageSize: opts.pageSize,
+      totalPages,
+    };
   }
 
   async setFrozen(userId: string, accountId: string, frozen: boolean) {
@@ -74,6 +93,19 @@ export class AccountsService {
       where: { id: accountId },
       data: { frozen },
       select: { id: true, frozen: true },
+    });
+  }
+
+  async setAllowOverLimit(userId: string, accountId: string, allowOverLimit: boolean) {
+    const acc = await this.prisma.account.findFirst({ where: { id: accountId, userId } });
+    if (!acc) throw new NotFoundException();
+    if (acc.type !== AccountType.CREDIT) {
+      throw new BadRequestException('Only credit accounts support this setting');
+    }
+    return this.prisma.account.update({
+      where: { id: accountId },
+      data: { allowOverLimit },
+      select: { id: true, allowOverLimit: true },
     });
   }
 

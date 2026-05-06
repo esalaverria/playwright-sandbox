@@ -33,6 +33,7 @@ export function TransferPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['accounts'] });
       await qc.invalidateQueries({ queryKey: ['tx'] });
+      await qc.invalidateQueries({ queryKey: ['dashboard-month'] });
     },
   });
 
@@ -47,6 +48,7 @@ export function TransferPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['accounts'] });
       await qc.invalidateQueries({ queryKey: ['tx'] });
+      await qc.invalidateQueries({ queryKey: ['dashboard-month'] });
     },
   });
 

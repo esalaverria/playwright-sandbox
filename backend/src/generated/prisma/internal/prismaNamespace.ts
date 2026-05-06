@@ -915,6 +915,8 @@ export const AccountScalarFieldEnum = {
   currency: 'currency',
   balanceCents: 'balanceCents',
   frozen: 'frozen',
+  creditLimitCents: 'creditLimitCents',
+  allowOverLimit: 'allowOverLimit',
   createdAt: 'createdAt'
 } as const
 

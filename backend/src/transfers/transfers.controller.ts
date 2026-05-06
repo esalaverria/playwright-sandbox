@@ -39,6 +39,18 @@ class PeerDto {
   memo?: string;
 }
 
+class PayCardDto {
+  @IsString()
+  creditAccountId!: string;
+
+  @IsString()
+  fromAccountId!: string;
+
+  @IsInt()
+  @IsPositive()
+  amountCents!: number;
+}
+
 @Controller('transfers')
 @UseGuards(JwtAuthGuard)
 export class TransfersController {
@@ -52,5 +64,10 @@ export class TransfersController {
   @Post('peer')
   async peer(@Req() req: Request & { user: { userId: string } }, @Body() dto: PeerDto) {
     return this.transfers.peer(req.user.userId, dto);
+  }
+
+  @Post('pay-card')
+  async payCard(@Req() req: Request & { user: { userId: string } }, @Body() dto: PayCardDto) {
+    return this.transfers.payCreditCard(req.user.userId, dto.creditAccountId, dto.fromAccountId, dto.amountCents);
   }
 }

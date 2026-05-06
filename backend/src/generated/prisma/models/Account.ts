@@ -28,10 +28,12 @@ export type AggregateAccount = {
 
 export type AccountAvgAggregateOutputType = {
   balanceCents: number | null
+  creditLimitCents: number | null
 }
 
 export type AccountSumAggregateOutputType = {
   balanceCents: number | null
+  creditLimitCents: number | null
 }
 
 export type AccountMinAggregateOutputType = {
@@ -43,6 +45,8 @@ export type AccountMinAggregateOutputType = {
   currency: string | null
   balanceCents: number | null
   frozen: boolean | null
+  creditLimitCents: number | null
+  allowOverLimit: boolean | null
   createdAt: Date | null
 }
 
@@ -55,6 +59,8 @@ export type AccountMaxAggregateOutputType = {
   currency: string | null
   balanceCents: number | null
   frozen: boolean | null
+  creditLimitCents: number | null
+  allowOverLimit: boolean | null
   createdAt: Date | null
 }
 
@@ -67,6 +73,8 @@ export type AccountCountAggregateOutputType = {
   currency: number
   balanceCents: number
   frozen: number
+  creditLimitCents: number
+  allowOverLimit: number
   createdAt: number
   _all: number
 }
@@ -74,10 +82,12 @@ export type AccountCountAggregateOutputType = {
 
 export type AccountAvgAggregateInputType = {
   balanceCents?: true
+  creditLimitCents?: true
 }
 
 export type AccountSumAggregateInputType = {
   balanceCents?: true
+  creditLimitCents?: true
 }
 
 export type AccountMinAggregateInputType = {
@@ -89,6 +99,8 @@ export type AccountMinAggregateInputType = {
   currency?: true
   balanceCents?: true
   frozen?: true
+  creditLimitCents?: true
+  allowOverLimit?: true
   createdAt?: true
 }
 
@@ -101,6 +113,8 @@ export type AccountMaxAggregateInputType = {
   currency?: true
   balanceCents?: true
   frozen?: true
+  creditLimitCents?: true
+  allowOverLimit?: true
   createdAt?: true
 }
 
@@ -113,6 +127,8 @@ export type AccountCountAggregateInputType = {
   currency?: true
   balanceCents?: true
   frozen?: true
+  creditLimitCents?: true
+  allowOverLimit?: true
   createdAt?: true
   _all?: true
 }
@@ -212,6 +228,8 @@ export type AccountGroupByOutputType = {
   currency: string
   balanceCents: number
   frozen: boolean
+  creditLimitCents: number | null
+  allowOverLimit: boolean
   createdAt: Date
   _count: AccountCountAggregateOutputType | null
   _avg: AccountAvgAggregateOutputType | null
@@ -247,6 +265,8 @@ export type AccountWhereInput = {
   currency?: Prisma.StringFilter<"Account"> | string
   balanceCents?: Prisma.IntFilter<"Account"> | number
   frozen?: Prisma.BoolFilter<"Account"> | boolean
+  creditLimitCents?: Prisma.IntNullableFilter<"Account"> | number | null
+  allowOverLimit?: Prisma.BoolFilter<"Account"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Account"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   ledgerEntries?: Prisma.LedgerEntryListRelationFilter
@@ -262,6 +282,8 @@ export type AccountOrderByWithRelationInput = {
   currency?: Prisma.SortOrder
   balanceCents?: Prisma.SortOrder
   frozen?: Prisma.SortOrder
+  creditLimitCents?: Prisma.SortOrderInput | Prisma.SortOrder
+  allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   ledgerEntries?: Prisma.LedgerEntryOrderByRelationAggregateInput
@@ -280,6 +302,8 @@ export type AccountWhereUniqueInput = Prisma.AtLeast<{
   currency?: Prisma.StringFilter<"Account"> | string
   balanceCents?: Prisma.IntFilter<"Account"> | number
   frozen?: Prisma.BoolFilter<"Account"> | boolean
+  creditLimitCents?: Prisma.IntNullableFilter<"Account"> | number | null
+  allowOverLimit?: Prisma.BoolFilter<"Account"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Account"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   ledgerEntries?: Prisma.LedgerEntryListRelationFilter
@@ -295,6 +319,8 @@ export type AccountOrderByWithAggregationInput = {
   currency?: Prisma.SortOrder
   balanceCents?: Prisma.SortOrder
   frozen?: Prisma.SortOrder
+  creditLimitCents?: Prisma.SortOrderInput | Prisma.SortOrder
+  allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.AccountCountOrderByAggregateInput
   _avg?: Prisma.AccountAvgOrderByAggregateInput
@@ -315,6 +341,8 @@ export type AccountScalarWhereWithAggregatesInput = {
   currency?: Prisma.StringWithAggregatesFilter<"Account"> | string
   balanceCents?: Prisma.IntWithAggregatesFilter<"Account"> | number
   frozen?: Prisma.BoolWithAggregatesFilter<"Account"> | boolean
+  creditLimitCents?: Prisma.IntNullableWithAggregatesFilter<"Account"> | number | null
+  allowOverLimit?: Prisma.BoolWithAggregatesFilter<"Account"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Account"> | Date | string
 }
 
@@ -326,6 +354,8 @@ export type AccountCreateInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAccountsInput
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
@@ -341,6 +371,8 @@ export type AccountUncheckedCreateInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
@@ -354,6 +386,8 @@ export type AccountUpdateInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
@@ -369,6 +403,8 @@ export type AccountUncheckedUpdateInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
@@ -383,6 +419,8 @@ export type AccountCreateManyInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
 }
 
@@ -394,6 +432,8 @@ export type AccountUpdateManyMutationInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -406,6 +446,8 @@ export type AccountUncheckedUpdateManyInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -428,11 +470,14 @@ export type AccountCountOrderByAggregateInput = {
   currency?: Prisma.SortOrder
   balanceCents?: Prisma.SortOrder
   frozen?: Prisma.SortOrder
+  creditLimitCents?: Prisma.SortOrder
+  allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type AccountAvgOrderByAggregateInput = {
   balanceCents?: Prisma.SortOrder
+  creditLimitCents?: Prisma.SortOrder
 }
 
 export type AccountMaxOrderByAggregateInput = {
@@ -444,6 +489,8 @@ export type AccountMaxOrderByAggregateInput = {
   currency?: Prisma.SortOrder
   balanceCents?: Prisma.SortOrder
   frozen?: Prisma.SortOrder
+  creditLimitCents?: Prisma.SortOrder
+  allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -456,11 +503,14 @@ export type AccountMinOrderByAggregateInput = {
   currency?: Prisma.SortOrder
   balanceCents?: Prisma.SortOrder
   frozen?: Prisma.SortOrder
+  creditLimitCents?: Prisma.SortOrder
+  allowOverLimit?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type AccountSumOrderByAggregateInput = {
   balanceCents?: Prisma.SortOrder
+  creditLimitCents?: Prisma.SortOrder
 }
 
 export type AccountScalarRelationFilter = {
@@ -522,6 +572,14 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type AccountCreateNestedOneWithoutLedgerEntriesInput = {
   create?: Prisma.XOR<Prisma.AccountCreateWithoutLedgerEntriesInput, Prisma.AccountUncheckedCreateWithoutLedgerEntriesInput>
   connectOrCreate?: Prisma.AccountCreateOrConnectWithoutLedgerEntriesInput
@@ -558,6 +616,8 @@ export type AccountCreateWithoutUserInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentCreateNestedManyWithoutFromAccountInput
@@ -571,6 +631,8 @@ export type AccountUncheckedCreateWithoutUserInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
@@ -614,6 +676,8 @@ export type AccountScalarWhereInput = {
   currency?: Prisma.StringFilter<"Account"> | string
   balanceCents?: Prisma.IntFilter<"Account"> | number
   frozen?: Prisma.BoolFilter<"Account"> | boolean
+  creditLimitCents?: Prisma.IntNullableFilter<"Account"> | number | null
+  allowOverLimit?: Prisma.BoolFilter<"Account"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Account"> | Date | string
 }
 
@@ -625,6 +689,8 @@ export type AccountCreateWithoutLedgerEntriesInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAccountsInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentCreateNestedManyWithoutFromAccountInput
@@ -639,6 +705,8 @@ export type AccountUncheckedCreateWithoutLedgerEntriesInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedCreateNestedManyWithoutFromAccountInput
 }
@@ -667,6 +735,8 @@ export type AccountUpdateWithoutLedgerEntriesInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUpdateManyWithoutFromAccountNestedInput
@@ -681,6 +751,8 @@ export type AccountUncheckedUpdateWithoutLedgerEntriesInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
 }
@@ -693,6 +765,8 @@ export type AccountCreateWithoutScheduledPaymentsFromInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutAccountsInput
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutAccountInput
@@ -707,6 +781,8 @@ export type AccountUncheckedCreateWithoutScheduledPaymentsFromInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutAccountInput
 }
@@ -735,6 +811,8 @@ export type AccountUpdateWithoutScheduledPaymentsFromInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutAccountsNestedInput
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
@@ -749,6 +827,8 @@ export type AccountUncheckedUpdateWithoutScheduledPaymentsFromInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
 }
@@ -761,6 +841,8 @@ export type AccountCreateManyUserInput = {
   currency?: string
   balanceCents?: number
   frozen?: boolean
+  creditLimitCents?: number | null
+  allowOverLimit?: boolean
   createdAt?: Date | string
 }
 
@@ -772,6 +854,8 @@ export type AccountUpdateWithoutUserInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUpdateManyWithoutFromAccountNestedInput
@@ -785,6 +869,8 @@ export type AccountUncheckedUpdateWithoutUserInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutAccountNestedInput
   scheduledPaymentsFrom?: Prisma.ScheduledPaymentUncheckedUpdateManyWithoutFromAccountNestedInput
@@ -798,6 +884,8 @@ export type AccountUncheckedUpdateManyWithoutUserInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   balanceCents?: Prisma.IntFieldUpdateOperationsInput | number
   frozen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  creditLimitCents?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  allowOverLimit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -850,6 +938,8 @@ export type AccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   currency?: boolean
   balanceCents?: boolean
   frozen?: boolean
+  creditLimitCents?: boolean
+  allowOverLimit?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ledgerEntries?: boolean | Prisma.Account$ledgerEntriesArgs<ExtArgs>
@@ -866,6 +956,8 @@ export type AccountSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   currency?: boolean
   balanceCents?: boolean
   frozen?: boolean
+  creditLimitCents?: boolean
+  allowOverLimit?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["account"]>
@@ -879,6 +971,8 @@ export type AccountSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   currency?: boolean
   balanceCents?: boolean
   frozen?: boolean
+  creditLimitCents?: boolean
+  allowOverLimit?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["account"]>
@@ -892,10 +986,12 @@ export type AccountSelectScalar = {
   currency?: boolean
   balanceCents?: boolean
   frozen?: boolean
+  creditLimitCents?: boolean
+  allowOverLimit?: boolean
   createdAt?: boolean
 }
 
-export type AccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "nickname" | "mask" | "currency" | "balanceCents" | "frozen" | "createdAt", ExtArgs["result"]["account"]>
+export type AccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "nickname" | "mask" | "currency" | "balanceCents" | "frozen" | "creditLimitCents" | "allowOverLimit" | "createdAt", ExtArgs["result"]["account"]>
 export type AccountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ledgerEntries?: boolean | Prisma.Account$ledgerEntriesArgs<ExtArgs>
@@ -925,6 +1021,14 @@ export type $AccountPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     currency: string
     balanceCents: number
     frozen: boolean
+    /**
+     * Max debt in cents for CREDIT (positive cap). Ignored for non-credit accounts.
+     */
+    creditLimitCents: number | null
+    /**
+     * When false, charges/cash advances cannot push debt above creditLimitCents.
+     */
+    allowOverLimit: boolean
     createdAt: Date
   }, ExtArgs["result"]["account"]>
   composites: {}
@@ -1360,6 +1464,8 @@ export interface AccountFieldRefs {
   readonly currency: Prisma.FieldRef<"Account", 'String'>
   readonly balanceCents: Prisma.FieldRef<"Account", 'Int'>
   readonly frozen: Prisma.FieldRef<"Account", 'Boolean'>
+  readonly creditLimitCents: Prisma.FieldRef<"Account", 'Int'>
+  readonly allowOverLimit: Prisma.FieldRef<"Account", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Account", 'DateTime'>
 }
     

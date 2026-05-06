@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AccountsModule } from './accounts/accounts.module';
 import { AuthModule } from './auth/auth.module';
 import { BillsModule } from './bills/bills.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
 import { MessagesModule } from './messages/messages.module';
 import { PayeesModule } from './payees/payees.module';
@@ -24,6 +25,7 @@ import { TransfersModule } from './transfers/transfers.module';
     BillsModule,
     MessagesModule,
     HealthModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}

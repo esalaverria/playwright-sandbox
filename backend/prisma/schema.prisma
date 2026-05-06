@@ -40,17 +40,21 @@ model User {
 }
 
 model Account {
-  id               String     @id @default(cuid())
-  userId           String
-  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type             AccountType
-  nickname         String
-  mask             String
-  currency         String     @default("USD")
-  balanceCents     Int        @default(0)
-  frozen           Boolean    @default(false)
-  createdAt        DateTime   @default(now())
-  ledgerEntries    LedgerEntry[]
+  id                 String     @id @default(cuid())
+  userId             String
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type               AccountType
+  nickname           String
+  mask               String
+  currency           String     @default("USD")
+  balanceCents       Int        @default(0)
+  frozen             Boolean    @default(false)
+  /// Max debt in cents for CREDIT (positive cap). Ignored for non-credit accounts.
+  creditLimitCents   Int?
+  /// When false, charges/cash advances cannot push debt above creditLimitCents.
+  allowOverLimit     Boolean    @default(false)
+  createdAt          DateTime   @default(now())
+  ledgerEntries      LedgerEntry[]
   scheduledPaymentsFrom ScheduledPayment[]
 }
 

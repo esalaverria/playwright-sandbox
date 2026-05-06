@@ -1,10 +1,40 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { LedgerStatus } from '../generated/prisma/client';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { AccountType, LedgerStatus } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+
+type CreditCapAccount = {
+  type: string;
+  creditLimitCents: number | null;
+  allowOverLimit: boolean;
+};
 
 @Injectable()
 export class TransfersService {
   constructor(private prisma: PrismaService) {}
+
+  /** Debt owed on a credit line (positive cents). */
+  private debtCents(balanceCents: number): number {
+    return Math.max(0, -balanceCents);
+  }
+
+  private assertWithinCreditLimit(acc: CreditCapAccount, newBalanceCents: number) {
+    if (acc.type !== AccountType.CREDIT) return;
+    const limit = acc.creditLimitCents;
+    if (limit == null) return;
+    const newDebt = this.debtCents(newBalanceCents);
+    if (newDebt > limit && !acc.allowOverLimit) {
+      throw new BadRequestException({
+        code: 'OVER_CREDIT_LIMIT',
+        message:
+          'This would exceed your credit limit. Pay down the balance, raise the limit, or turn on “Allow charges over limit” for this card.',
+      });
+    }
+  }
 
   async internal(
     userId: string,
@@ -21,13 +51,19 @@ export class TransfersService {
       const from = await tx.account.findFirst({ where: { id: body.fromAccountId, userId } });
       const to = await tx.account.findFirst({ where: { id: body.toAccountId, userId } });
       if (!from || !to) throw new ForbiddenException('Accounts must belong to you');
-      if (from.balanceCents < body.amountCents) {
+      if (
+        (from.type === AccountType.CHECKING || from.type === AccountType.SAVINGS) &&
+        from.balanceCents < body.amountCents
+      ) {
         throw new BadRequestException({ code: 'INSUFFICIENT_FUNDS', message: 'Insufficient funds' });
       }
 
       const memo = body.memo?.trim() || 'Transfer';
       const fromBal = from.balanceCents - body.amountCents;
       const toBal = to.balanceCents + body.amountCents;
+
+      this.assertWithinCreditLimit(from, fromBal);
+      this.assertWithinCreditLimit(to, toBal);
 
       await tx.account.update({ where: { id: from.id }, data: { balanceCents: fromBal } });
       await tx.account.update({ where: { id: to.id }, data: { balanceCents: toBal } });
@@ -52,6 +88,28 @@ export class TransfersService {
       });
 
       return { ok: true, fromBalanceCents: fromBal, toBalanceCents: toBal };
+    });
+  }
+
+  /** Pay down a credit card from checking or savings. */
+  async payCreditCard(userId: string, creditAccountId: string, fromAccountId: string, amountCents: number) {
+    if (!Number.isInteger(amountCents) || amountCents <= 0) {
+      throw new BadRequestException({ code: 'BAD_AMOUNT', message: 'Amount must be a positive whole number of cents' });
+    }
+    const credit = await this.prisma.account.findFirst({ where: { id: creditAccountId, userId } });
+    if (!credit || credit.type !== AccountType.CREDIT) {
+      throw new BadRequestException({ code: 'NOT_CREDIT', message: 'Destination must be a credit card account' });
+    }
+    const from = await this.prisma.account.findFirst({ where: { id: fromAccountId, userId } });
+    if (!from) throw new NotFoundException('Source account not found');
+    if (from.type !== AccountType.CHECKING && from.type !== AccountType.SAVINGS) {
+      throw new BadRequestException({ code: 'INVALID_PAY_FROM', message: 'Pay from a checking or savings account' });
+    }
+    return this.internal(userId, {
+      fromAccountId,
+      toAccountId: creditAccountId,
+      amountCents,
+      memo: 'Card payment',
     });
   }
 
@@ -86,13 +144,19 @@ export class TransfersService {
     return this.prisma.$transaction(async (tx) => {
       const from = await tx.account.findFirst({ where: { id: body.fromAccountId, userId } });
       if (!from) throw new ForbiddenException('Source account not found');
-      if (from.balanceCents < body.amountCents) {
+      if (
+        (from.type === AccountType.CHECKING || from.type === AccountType.SAVINGS) &&
+        from.balanceCents < body.amountCents
+      ) {
         throw new BadRequestException({ code: 'INSUFFICIENT_FUNDS', message: 'Insufficient funds' });
       }
 
       const memo = body.memo?.trim() || 'Transfer';
       const fromBal = from.balanceCents - body.amountCents;
       const toBal = toAcc.balanceCents + body.amountCents;
+
+      this.assertWithinCreditLimit(from, fromBal);
+      this.assertWithinCreditLimit(toAcc, toBal);
 
       await tx.account.update({ where: { id: from.id }, data: { balanceCents: fromBal } });
       await tx.account.update({ where: { id: toAcc.id }, data: { balanceCents: toBal } });

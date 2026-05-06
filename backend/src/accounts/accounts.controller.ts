@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
@@ -7,7 +8,6 @@ import {
   Req,
   Res,
   UseGuards,
-  Body,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { IsBoolean } from 'class-validator';
@@ -17,6 +17,11 @@ import { AccountsService } from './accounts.service';
 class FreezeDto {
   @IsBoolean()
   frozen!: boolean;
+}
+
+class AllowOverLimitDto {
+  @IsBoolean()
+  allowOverLimit!: boolean;
 }
 
 @Controller('accounts')
@@ -34,12 +39,21 @@ export class AccountsController {
   async txs(
     @Req() req: Request & { user: { userId: string } },
     @Param('id') id: string,
-    @Query('take') takeRaw?: string,
-    @Query('cursor') cursor?: string,
+    @Query('page') pageRaw?: string,
+    @Query('pageSize') pageSizeRaw?: string,
     @Query('q') q?: string,
+    @Query('from') fromDate?: string,
+    @Query('to') toDate?: string,
   ) {
-    const take = Math.min(100, Math.max(1, Number(takeRaw) || 25));
-    return this.accounts.transactions(req.user.userId, id, { take, cursor, q });
+    const page = Math.max(1, Number(pageRaw) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(pageSizeRaw) || 15));
+    return this.accounts.transactions(req.user.userId, id, {
+      page,
+      pageSize,
+      q,
+      from: fromDate,
+      to: toDate,
+    });
   }
 
   @Get(':id/statements')
@@ -70,5 +84,14 @@ export class AccountsController {
     @Body() dto: FreezeDto,
   ) {
     return this.accounts.setFrozen(req.user.userId, id, dto.frozen);
+  }
+
+  @Patch(':id/credit-settings')
+  async creditSettings(
+    @Req() req: Request & { user: { userId: string } },
+    @Param('id') id: string,
+    @Body() dto: AllowOverLimitDto,
+  ) {
+    return this.accounts.setAllowOverLimit(req.user.userId, id, dto.allowOverLimit);
   }
 }
