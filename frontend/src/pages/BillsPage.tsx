@@ -1,10 +1,11 @@
-import { Button, Chip, Input, Label, Modal, Tabs, useOverlayState } from '@heroui/react';
+import { Button, Chip, Input, Label, Modal, useOverlayState } from '@heroui/react';
 import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../notifications/ToastProvider';
 import { CurrencyTextField } from '../ui/CurrencyTextField';
+import { AccountSelect } from '../ui/AccountSelect';
 
 type BillRow = {
   id: string;
@@ -31,9 +32,6 @@ function apiErrorMessage(err: unknown, fallback: string): string {
   if (typeof m === 'string') return m;
   return fallback;
 }
-
-const selectClass =
-  'bg-field text-field mt-2 w-full max-w-md cursor-pointer rounded-xl border px-4 py-2.5 outline-none transition-[border,color,background] focus-visible:border-accent focus-visible:ring-[2px] focus-visible:ring-focus';
 
 export function BillsPage() {
   const qc = useQueryClient();
@@ -73,6 +71,26 @@ export function BillsPage() {
     if (a.type === 'CHECKING' || a.type === 'SAVINGS') return true;
     return a.type === 'CREDIT' && a.cardLifecycle === 'ACTIVE';
   });
+  const payFromSelectOptions = payFromAccounts.map((a) => ({
+    id: a.id,
+    label: `${a.nickname} (${(a.balanceCents / 100).toFixed(2)}) ${a.frozen ? '· Frozen' : ''}`.trim(),
+    disabled: !!a.frozen,
+  }));
+
+  const [scheduleFromAccountId, setScheduleFromAccountId] = useState('');
+  const [payNowFromAccountId, setPayNowFromAccountId] = useState('');
+  const [editFromAccountId, setEditFromAccountId] = useState('');
+
+  useEffect(() => {
+    const list = payFromAccounts;
+    const resolve = (cur: string) => {
+      if (cur && list.some((a) => a.id === cur && !a.frozen)) return cur;
+      return list.find((a) => !a.frozen)?.id ?? '';
+    };
+    setScheduleFromAccountId((c) => resolve(c));
+    setPayNowFromAccountId((c) => resolve(c));
+  }, [accounts.data]);
+
   const payees = useQuery({
     queryKey: ['payees'],
     queryFn: async () => {
@@ -102,6 +120,11 @@ export function BillsPage() {
   });
 
   const editing = (bills.data ?? []).find((b) => b.id === editId);
+
+  useEffect(() => {
+    const row = (bills.data ?? []).find((b) => b.id === editId);
+    if (row) setEditFromAccountId(row.fromAccountId);
+  }, [editId, bills.data]);
 
   const create = useMutation({
     mutationFn: async (payload: {
@@ -154,25 +177,38 @@ export function BillsPage() {
       <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Bill pay</h1>
 
       <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
-        <Tabs.Root
-          selectedKey={tab}
-          onSelectionChange={(k) => setTab(k as BillTab)}
-          aria-label="Bill payment mode"
-          className="w-full max-w-xl"
-        >
-          <Tabs.ListContainer className="border-b border-neutral-200">
-            <Tabs.List className="relative flex gap-1">
-              <Tabs.Tab id="schedule" className="cursor-pointer pb-3 pr-6 text-base font-semibold">
-                Schedule payment
-              </Tabs.Tab>
-              <Tabs.Tab id="paynow" className="cursor-pointer pb-3 pr-6 text-base font-semibold">
-                Pay now
-              </Tabs.Tab>
-              <Tabs.Indicator className="bg-primary h-1 rounded-full" />
-            </Tabs.List>
-          </Tabs.ListContainer>
+        <div className="w-full max-w-xl">
+          <div role="tablist" aria-label="Bill payment mode" className="relative flex gap-1 border-b border-neutral-200">
+            <button
+              type="button"
+              role="tab"
+              id="bill-tab-schedule"
+              aria-selected={tab === 'schedule'}
+              aria-controls="bill-panel-schedule"
+              className={`cursor-pointer border-b-2 pb-3 pr-6 text-base font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                tab === 'schedule' ? 'border-indigo-600 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-800'
+              }`}
+              onClick={() => setTab('schedule')}
+            >
+              Schedule payment
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="bill-tab-paynow"
+              aria-selected={tab === 'paynow'}
+              aria-controls="bill-panel-paynow"
+              className={`cursor-pointer border-b-2 pb-3 pr-6 text-base font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                tab === 'paynow' ? 'border-indigo-600 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-800'
+              }`}
+              onClick={() => setTab('paynow')}
+            >
+              Pay now
+            </button>
+          </div>
 
-          <Tabs.Panel id="schedule" className="pt-6">
+          {tab === 'schedule' ? (
+            <div role="tabpanel" id="bill-panel-schedule" aria-labelledby="bill-tab-schedule" className="pt-6">
             <form
               className="flex max-w-lg flex-col gap-4"
               onSubmit={(e: FormEvent<HTMLFormElement>) => {
@@ -180,7 +216,7 @@ export function BillsPage() {
                 const fd = new FormData(e.currentTarget);
                 create.mutate({
                   billerName: biller,
-                  fromAccountId: String(fd.get('fromAccountId') ?? ''),
+                  fromAccountId: scheduleFromAccountId,
                   amountCents: Math.round(Number(billAmount) * 100),
                   dueDate: String(fd.get('dueDate') ?? ''),
                   memo: String(fd.get('memo') ?? '') || undefined,
@@ -212,36 +248,32 @@ export function BillsPage() {
                   {matchedPayee.externalRef}
                 </p>
               ) : null}
-              <div>
-                <Label htmlFor="bill-from-sched" className="font-medium">
-                  Pay from
-                </Label>
-                <select name="fromAccountId" id="bill-from-sched" required className={selectClass} defaultValue="">
-                  <option value="" disabled>
-                    Select account
-                  </option>
-                  {payFromAccounts.map((a) => (
-                    <option key={a.id} value={a.id} disabled={!!a.frozen}>
-                      {a.nickname} ({(a.balanceCents / 100).toFixed(2)}) {a.frozen ? '· Frozen' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <AccountSelect
+                label="Pay from"
+                aria-label="Pay from"
+                placeholder="Select account"
+                options={payFromSelectOptions}
+                value={scheduleFromAccountId}
+                onChange={setScheduleFromAccountId}
+                name="fromAccountId"
+              />
               <CurrencyTextField label="Amount" value={billAmount} onChangeValue={setBillAmount} required />
               <div>
                 <Label htmlFor="due-date" className="font-medium">
                   Due date
                 </Label>
-                <Input id="due-date" type="date" name="dueDate" required className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none" />
+                <Input id="due-date" type="date" name="dueDate" required className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" />
               </div>
               <InputLike name="memo" label="Memo" />
               <Button type="submit" variant="primary">
                 Schedule
               </Button>
             </form>
-          </Tabs.Panel>
+            </div>
+          ) : null}
 
-          <Tabs.Panel id="paynow" className="pt-6">
+          {tab === 'paynow' ? (
+            <div role="tabpanel" id="bill-panel-paynow" aria-labelledby="bill-tab-paynow" className="pt-6">
             <form
               className="flex max-w-lg flex-col gap-4"
               onSubmit={(e: FormEvent<HTMLFormElement>) => {
@@ -251,7 +283,7 @@ export function BillsPage() {
                 const iso = today.toISOString().slice(0, 10);
                 create.mutate({
                   billerName: payNowBiller,
-                  fromAccountId: String(fd.get('pn_fromAccountId') ?? ''),
+                  fromAccountId: payNowFromAccountId,
                   amountCents: Math.round(Number(payNowAmount) * 100),
                   dueDate: iso,
                   memo: String(fd.get('pn_memo') ?? '') || undefined,
@@ -284,29 +316,24 @@ export function BillsPage() {
                   {matchedPayeePayNow.externalRef}
                 </p>
               ) : null}
-              <div>
-                <Label htmlFor="bill-from-now" className="font-medium">
-                  Pay from
-                </Label>
-                <select name="pn_fromAccountId" id="bill-from-now" required className={selectClass} defaultValue="">
-                  <option value="" disabled>
-                    Select account
-                  </option>
-                  {payFromAccounts.map((a) => (
-                    <option key={a.id} value={a.id} disabled={!!a.frozen}>
-                      {a.nickname} ({(a.balanceCents / 100).toFixed(2)}) {a.frozen ? '· Frozen' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <AccountSelect
+                label="Pay from"
+                aria-label="Pay from"
+                placeholder="Select account"
+                options={payFromSelectOptions}
+                value={payNowFromAccountId}
+                onChange={setPayNowFromAccountId}
+                name="pn_fromAccountId"
+              />
               <CurrencyTextField label="Amount" value={payNowAmount} onChangeValue={setPayNowAmount} required />
               <InputLike idSuffix="pay" name="pn_memo" label="Memo" />
               <Button type="submit" variant="primary">
                 Pay now
               </Button>
             </form>
-          </Tabs.Panel>
-        </Tabs.Root>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="rounded-xl border border-neutral-200 bg-white p-2 shadow-sm sm:p-4">
@@ -399,7 +426,7 @@ export function BillsPage() {
                         patchBill.mutate({
                           id: editing.id,
                           billerName: String(fd.get('billerName') ?? ''),
-                          fromAccountId: String(fd.get('fromAccountId') ?? ''),
+                          fromAccountId: editFromAccountId,
                           amountCents: Math.round(Number(fd.get('amount') ?? 0) * 100),
                           dueDate: String(fd.get('dueDate') ?? ''),
                           memo: memoRaw.length ? memoRaw : '',
@@ -416,27 +443,18 @@ export function BillsPage() {
                             name="billerName"
                             required
                             defaultValue={editing.billerName}
-                            className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+                            className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                           />
                         </div>
-                        <div>
-                          <Label htmlFor="edit-from" className="font-medium">
-                            Pay from
-                          </Label>
-                          <select
-                            id="edit-from"
-                            name="fromAccountId"
-                            required
-                            defaultValue={editing.fromAccountId}
-                            className={selectClass}
-                          >
-                            {payFromAccounts.map((a) => (
-                              <option key={a.id} value={a.id} disabled={!!a.frozen}>
-                                {a.nickname} ({(a.balanceCents / 100).toFixed(2)}) {a.frozen ? '· Frozen' : ''}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                        <AccountSelect
+                          label="Pay from"
+                          aria-label="Pay from"
+                          placeholder="Select account"
+                          options={payFromSelectOptions}
+                          value={editFromAccountId}
+                          onChange={setEditFromAccountId}
+                          name="fromAccountId"
+                        />
                         <div>
                           <Label htmlFor="edit-amt" className="font-medium">
                             Amount
@@ -449,7 +467,7 @@ export function BillsPage() {
                             min={0}
                             step={0.01}
                             defaultValue={(editing.amountCents / 100).toFixed(2)}
-                            className="mt-2 w-full rounded-xl border px-4 py-2.5 font-variant-numeric tabular-nums outline-none"
+                            className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 font-variant-numeric tabular-nums text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                           />
                         </div>
                         <div>
@@ -462,7 +480,7 @@ export function BillsPage() {
                             type="date"
                             required
                             defaultValue={editing.dueDate.slice(0, 10)}
-                            className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+                            className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                           />
                         </div>
                         <div>
@@ -473,7 +491,7 @@ export function BillsPage() {
                             id="edit-memo"
                             name="memo"
                             defaultValue={editing.memo ?? ''}
-                            className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+                            className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                           />
                         </div>
                       </Modal.Body>
@@ -526,7 +544,7 @@ function TextLike(props: {
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+        className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       />
     </div>
   );
@@ -540,7 +558,11 @@ function InputLike(props: { idSuffix?: string; name: string; label: string }) {
       <Label htmlFor={id} className="font-medium">
         {label}
       </Label>
-      <Input id={id} name={name} className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none" />
+      <Input
+        id={id}
+        name={name}
+        className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+      />
     </div>
   );
 }

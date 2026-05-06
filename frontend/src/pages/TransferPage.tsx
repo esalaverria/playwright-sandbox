@@ -1,10 +1,13 @@
-import { Button, Input, Label, Tabs, TextField } from '@heroui/react';
+import { Button, Input, Label, TextField } from '@heroui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { usePrivacy } from '../privacy/PrivacyProvider';
 import { useToast } from '../notifications/ToastProvider';
 import { CurrencyTextField } from '../ui/CurrencyTextField';
+import { AccountSelect } from '../ui/AccountSelect';
+
+type TransferTabKey = 'internal' | 'peer';
 
 type Account = {
   id: string;
@@ -17,15 +20,21 @@ type Account = {
   cardLifecycle?: string;
 };
 
-type TabKey = 'internal' | 'peer';
+function firstUsableDepositId(rows: Pick<Account, 'id' | 'frozen'>[]): string {
+  const u = rows.find((a) => !a.frozen);
+  return u?.id ?? rows[0]?.id ?? '';
+}
 
 export function TransferPage() {
   const qc = useQueryClient();
   const toast = useToast();
   const { formatMoney } = usePrivacy();
-  const [kind, setKind] = useState<TabKey>('internal');
+  const [tab, setTab] = useState<TransferTabKey>('internal');
   const [intAmount, setIntAmount] = useState('');
   const [peerAmount, setPeerAmount] = useState('');
+  const [intFrom, setIntFrom] = useState('');
+  const [intTo, setIntTo] = useState('');
+  const [peerFrom, setPeerFrom] = useState('');
 
   const { data: accounts } = useQuery({
     queryKey: ['accounts'],
@@ -36,16 +45,30 @@ export function TransferPage() {
   });
 
   const fromAccounts = (accounts ?? []).filter(
-    (a) =>
-      (a.type === 'CHECKING' || a.type === 'SAVINGS') &&
-      !a.closedAt,
+    (a) => (a.type === 'CHECKING' || a.type === 'SAVINGS') && !a.closedAt,
   );
   const internalToAccounts = (accounts ?? []).filter(
     (a) =>
-      (a.type === 'CHECKING' || a.type === 'SAVINGS') &&
-      !a.closedAt &&
-      !a.frozen,
+      (a.type === 'CHECKING' || a.type === 'SAVINGS') && !a.closedAt && !a.frozen,
   );
+
+  useEffect(() => {
+    const list = (accounts ?? []).filter(
+      (a) => (a.type === 'CHECKING' || a.type === 'SAVINGS') && !a.closedAt,
+    );
+    if (!list.length) return;
+    setIntFrom((cur) => (cur && list.some((a) => a.id === cur) ? cur : firstUsableDepositId(list)));
+    setPeerFrom((cur) => (cur && list.some((a) => a.id === cur) ? cur : firstUsableDepositId(list)));
+  }, [accounts]);
+
+  useEffect(() => {
+    const list = (accounts ?? []).filter(
+      (a) =>
+        (a.type === 'CHECKING' || a.type === 'SAVINGS') && !a.closedAt && !a.frozen,
+    );
+    if (!list.length) return;
+    setIntTo((cur) => (cur && list.some((a) => a.id === cur) ? cur : list[0]!.id));
+  }, [accounts]);
 
   const internal = useMutation({
     mutationFn: async (payload: {
@@ -105,8 +128,22 @@ export function TransferPage() {
     setPeerTo((cur) => (peerAccounts.some((a) => a.id === cur) ? cur : peerAccounts[0]!.id));
   }, [peerAccounts]);
 
-  const inputSelect =
-    'bg-field text-field mt-2 w-full cursor-pointer rounded-xl border px-4 py-2.5 outline-none transition-[border,color,background] focus-visible:border-accent focus-visible:ring-[2px] focus-visible:ring-focus';
+  const fromOptions = fromAccounts.map((a) => ({
+    id: a.id,
+    label: `${a.nickname} (${formatMoney(a.balanceCents)})${a.frozen ? ' · Frozen' : ''}`,
+    disabled: !!a.frozen,
+  }));
+  const internalToOptions = internalToAccounts.map((a) => ({
+    id: a.id,
+    label: `${a.nickname} (${formatMoney(a.balanceCents)})${a.frozen ? ' · Frozen' : ''}`,
+    disabled: !!a.frozen,
+  }));
+  const peerToOptions = peerAccounts.map((a) => ({
+    id: a.id,
+    label: `${a.nickname} ${a.mask} · ${a.type} · ${formatMoney(a.balanceCents)}`,
+  }));
+
+  const inputClass = 'mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
 
   return (
     <div className="flex max-w-xl flex-col gap-6">
@@ -117,87 +154,112 @@ export function TransferPage() {
         moving money to yourself or others.
       </p>
 
-      <Tabs.Root
-        selectedKey={kind}
-        onSelectionChange={(k) => setKind(k as TabKey)}
-        aria-label="Transfer type"
-        className="w-full max-w-xl"
-      >
-        <Tabs.ListContainer className="border-b border-neutral-300">
-          <Tabs.List className="relative flex gap-1">
-            <Tabs.Tab id="internal" className="cursor-pointer pb-3 pr-6 text-base font-semibold">
-              Between my accounts
-            </Tabs.Tab>
-            <Tabs.Tab id="peer" className="cursor-pointer pb-3 pr-6 text-base font-semibold">
-              Send to someone
-            </Tabs.Tab>
-            <Tabs.Indicator className="bg-primary h-1 rounded-full data-[selected]:bg-indigo-700" />
-          </Tabs.List>
-        </Tabs.ListContainer>
+      <div className="w-full max-w-xl">
+        <div role="tablist" aria-label="Transfer type" className="relative flex gap-1 border-b border-neutral-300">
+          <button
+            type="button"
+            role="tab"
+            id="transfer-tab-internal"
+            aria-selected={tab === 'internal'}
+            aria-controls="transfer-panel-internal"
+            className={`cursor-pointer border-b-2 pb-3 pr-6 text-base font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+              tab === 'internal' ? 'border-indigo-700 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-800'
+            }`}
+            onClick={() => setTab('internal')}
+          >
+            Between my accounts
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="transfer-tab-peer"
+            aria-selected={tab === 'peer'}
+            aria-controls="transfer-panel-peer"
+            className={`cursor-pointer border-b-2 pb-3 pr-6 text-base font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+              tab === 'peer' ? 'border-indigo-700 text-neutral-900' : 'border-transparent text-neutral-500 hover:text-neutral-800'
+            }`}
+            onClick={() => setTab('peer')}
+          >
+            Send to someone
+          </button>
+        </div>
 
-        <Tabs.Panel id="internal" className="pt-8 outline-none [&:focus-visible]:ring-2 [&:focus-visible]:ring-transparent">
+        {tab === 'internal' ? (
+          <div
+            role="tabpanel"
+            id="transfer-panel-internal"
+            aria-labelledby="transfer-tab-internal"
+            className="pt-8 outline-none [&:focus-visible]:ring-2 [&:focus-visible]:ring-transparent"
+          >
           <form
             data-transfer-kind="internal"
             className="flex flex-col gap-6"
             onSubmit={(e) => {
               e.preventDefault();
+              if (!intFrom || !intTo) return;
               const fd = new FormData(e.currentTarget);
               const amt = Number(intAmount);
               internal.mutate({
-                fromAccountId: String(fd.get('from')),
-                toAccountId: String(fd.get('to')),
+                fromAccountId: intFrom,
+                toAccountId: intTo,
                 amountCents: Math.round(amt * 100),
                 memo: String(fd.get('memo') ?? '') || undefined,
               });
             }}
           >
-            <div>
-              <Label htmlFor="int-from">From</Label>
-              <select id="int-from" name="from" required aria-label="From" className={inputSelect} defaultValue="">
-                <option value="" disabled>
-                  Select account
-                </option>
-                {fromAccounts.map((a) => (
-                  <option key={a.id} value={a.id} disabled={!!a.frozen}>
-                    {a.nickname} ({formatMoney(a.balanceCents)}) {a.frozen ? '· Frozen' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="int-to">To</Label>
-              <select id="int-to" name="to" required aria-label="To" className={inputSelect} defaultValue="">
-                <option value="" disabled>
-                  Select account
-                </option>
-                {internalToAccounts.map((a) => (
-                  <option key={a.id} value={a.id} disabled={!!a.frozen}>
-                    {a.nickname} ({formatMoney(a.balanceCents)}) {a.frozen ? '· Frozen' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AccountSelect
+              label="From"
+              aria-label="From"
+              placeholder="Select account"
+              options={fromOptions}
+              value={intFrom}
+              onChange={setIntFrom}
+              name="from"
+            />
+            <AccountSelect
+              label="To"
+              aria-label="To"
+              placeholder="Select account"
+              options={internalToOptions}
+              value={intTo}
+              onChange={setIntTo}
+              name="to"
+            />
             <CurrencyTextField label="Amount (USD)" value={intAmount} onChangeValue={setIntAmount} required />
             <TextField name="memo">
               <Label className="mb-2">Memo</Label>
               <Input />
             </TextField>
-            <Button type="submit" variant="primary" fullWidth size="lg" isDisabled={internal.isPending}>
+            <Button
+              type="submit"
+              variant="primary"
+              fullWidth
+              size="lg"
+              isDisabled={internal.isPending || !intFrom || !intTo}
+            >
               Submit internal transfer
             </Button>
           </form>
-        </Tabs.Panel>
+          </div>
+        ) : null}
 
-        <Tabs.Panel id="peer" className="pt-8 outline-none [&:focus-visible]:ring-2 [&:focus-visible]:ring-transparent">
+        {tab === 'peer' ? (
+          <div
+            role="tabpanel"
+            id="transfer-panel-peer"
+            aria-labelledby="transfer-tab-peer"
+            className="pt-8 outline-none [&:focus-visible]:ring-2 [&:focus-visible]:ring-transparent"
+          >
           <form
             data-transfer-kind="peer"
             className="flex flex-col gap-6"
             onSubmit={(e) => {
               e.preventDefault();
+              if (!peerFrom || !peerTo) return;
               const fd = new FormData(e.currentTarget);
               const amt = Number(peerAmount);
               peer.mutate({
-                fromAccountId: String(fd.get('from')),
+                fromAccountId: peerFrom,
                 recipientEmail: peerEmail.trim(),
                 toAccountId: peerTo,
                 amountCents: Math.round(amt * 100),
@@ -212,39 +274,29 @@ export function TransferPage() {
                 value={peerEmail}
                 onChange={(e) => setPeerEmail(e.target.value)}
                 required
-                className="mt-2 w-full rounded-xl border px-4 py-2.5 outline-none"
+                className={inputClass}
               />
             </div>
-            <div>
-              <Label htmlFor="peer-from">From your account</Label>
-              <select id="peer-from" name="from" required aria-label="From your account" className={inputSelect} defaultValue="">
-                <option value="" disabled>
-                  Select account
-                </option>
-                {fromAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.nickname} ({formatMoney(a.balanceCents)})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="peer-to">To their account</Label>
-              <select
-                id="peer-to"
-                aria-label="To their account"
-                value={peerTo}
-                required
-                onChange={(e) => setPeerTo(e.target.value)}
-                className={inputSelect}
-              >
-                {peerAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.nickname} {a.mask} · {a.type} · {formatMoney(a.balanceCents)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AccountSelect
+              label="From your account"
+              aria-label="From your account"
+              placeholder="Select account"
+              options={fromAccounts.map((a) => ({
+                id: a.id,
+                label: `${a.nickname} (${formatMoney(a.balanceCents)})`,
+              }))}
+              value={peerFrom}
+              onChange={setPeerFrom}
+              name="from"
+            />
+            <AccountSelect
+              label="To their account"
+              aria-label="To their account"
+              placeholder="Select account"
+              options={peerToOptions}
+              value={peerTo}
+              onChange={setPeerTo}
+            />
             {!preview.data?.userExists ? (
               <p className="text-muted text-xs leading-relaxed">Enter an email that belongs to another NorthPeak user.</p>
             ) : null}
@@ -257,8 +309,9 @@ export function TransferPage() {
               Send money
             </Button>
           </form>
-        </Tabs.Panel>
-      </Tabs.Root>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

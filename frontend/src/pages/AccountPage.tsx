@@ -2,15 +2,14 @@ import { Button, Input, Label, Skeleton } from '@heroui/react';
 import type { ChangeEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { api, delay, formatUsd } from '../api/client';
 import { usePrivacy } from '../privacy/PrivacyProvider';
-
-const inputRow =
-  'bg-field text-field mt-2 w-full min-w-[140px] cursor-pointer rounded-xl border px-4 py-2 outline-none transition-[border,color,background] focus-visible:border-accent focus-visible:ring-[2px] focus-visible:ring-focus sm:w-auto';
+import { UtcIsoDatePicker } from '../ui/UtcIsoDatePicker';
 
 export function AccountPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { formatMoney } = usePrivacy();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
@@ -74,23 +73,35 @@ export function AccountPage() {
   const loading = txs.isFetching || acc.isFetching;
   const ready = !loading && txs.data !== undefined && acc.data !== undefined;
 
+  const searchClass =
+    'w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-neutral-900 outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-indigo-500';
+
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">
-          {acc.data?.nickname ?? (acc.isFetching ? <Skeleton className="inline-block h-9 w-44 rounded-md" /> : 'Account')}
-        </h1>
-        <p className="text-sm font-medium text-neutral-600">{acc.data?.mask}</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">
+            {acc.data?.nickname ?? (acc.isFetching ? <Skeleton className="inline-block h-9 w-44 rounded-md" /> : 'Account')}
+          </h1>
+          <p className="text-sm font-medium text-neutral-600">{acc.data?.mask}</p>
+          {acc.data ? (
+            <p className="mt-2 text-base font-semibold text-neutral-800">
+              Balance: {formatMoney(acc.data.balanceCents)}
+            </p>
+          ) : null}
+        </div>
         {acc.data ? (
-          <p className="mt-2 text-base font-semibold text-neutral-800">
-            Balance: {formatMoney(acc.data.balanceCents)}
-          </p>
+          <div className="shrink-0 pt-1">
+            <Button variant="outline" size="md" onPress={() => navigate('/transfer')}>
+              Make a transfer
+            </Button>
+          </div>
         ) : null}
       </div>
 
       <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-[200px] flex-1">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-12">
+          <div className="sm:col-span-12 lg:col-span-5">
             <Label htmlFor="q-desc" className="mb-2 block font-medium text-neutral-800">
               Search description
             </Label>
@@ -98,55 +109,50 @@ export function AccountPage() {
               id="q-desc"
               value={qDraft}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setQDraft(e.target.value)}
-              className="w-full rounded-xl border px-4 py-2 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              placeholder="Describe a transaction…"
+              className={searchClass}
             />
           </div>
-          <div className="w-[160px] shrink-0">
-            <Label htmlFor="tx-from" className="mb-2 block font-medium text-neutral-800">
-              From (UTC date)
-            </Label>
-            <input
-              id="tx-from"
-              type="date"
-              value={from}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setFrom(e.target.value);
+          <div className="sm:col-span-6 lg:col-span-3">
+            <UtcIsoDatePicker
+              label="From (UTC date)"
+              aria-label="From UTC date filter"
+              valueIso={from}
+              onChangeIso={(iso) => {
+                setFrom(iso);
                 setPage(1);
               }}
-              className={inputRow}
             />
           </div>
-          <div className="w-[160px] shrink-0">
-            <Label htmlFor="tx-to" className="mb-2 block font-medium text-neutral-800">
-              To (UTC date)
-            </Label>
-            <input
-              id="tx-to"
-              type="date"
-              value={to}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setTo(e.target.value);
+          <div className="sm:col-span-6 lg:col-span-4">
+            <UtcIsoDatePicker
+              label="To (UTC date)"
+              aria-label="To UTC date filter"
+              valueIso={to}
+              onChangeIso={(iso) => {
+                setTo(iso);
                 setPage(1);
               }}
-              className={inputRow}
             />
           </div>
-          <Button variant="primary" size="md" onPress={() => { setQ(qDraft); setPage(1); }}>
-            Apply filters
-          </Button>
-          <Button
-            variant="ghost"
-            size="md"
-            onPress={() => {
-              setQ('');
-              setQDraft('');
-              setFrom('');
-              setTo('');
-              setPage(1);
-            }}
-          >
-            Clear
-          </Button>
+          <div className="flex flex-wrap items-end gap-3 sm:col-span-12 lg:flex-nowrap lg:justify-end xl:col-span-12">
+            <Button variant="primary" size="md" onPress={() => { setQ(qDraft); setPage(1); }}>
+              Apply filters
+            </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              onPress={() => {
+                setQ('');
+                setQDraft('');
+                setFrom('');
+                setTo('');
+                setPage(1);
+              }}
+            >
+              Clear
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -229,10 +235,6 @@ export function AccountPage() {
           </div>
         </div>
       </div>
-
-      <RouterLink to="/transfer" className="text-sm font-semibold text-indigo-600 underline-offset-4 hover:underline">
-        Make a transfer
-      </RouterLink>
     </div>
   );
 }

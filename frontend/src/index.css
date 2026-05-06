@@ -5,6 +5,16 @@
   --font-sans: 'Plus Jakarta Sans', 'DM Sans', system-ui, sans-serif;
 }
 
+/* HeroUI default uses transparent field borders; bump contrast */
+@layer base {
+  :root {
+    --field-border: oklch(0.82 0.06 290);
+    --field-border-hover: oklch(0.74 0.08 290);
+    --field-border-focus: oklch(0.55 0.19 275);
+    --border-width-field: 1px;
+  }
+}
+
 body {
   font-family: var(--font-sans);
 }

@@ -66,7 +66,7 @@ export function ActivityPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">Account activity</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">User activity</h1>
         <p className="mt-2 text-sm font-medium text-neutral-600">
           Security and banking actions on your profile (not transaction ledger).
         </p>

@@ -27,13 +27,13 @@ const SIDEBAR_W = 260;
 const nav: { to: string; label: string; icon: LucideIcon }[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/accounts', label: 'Accounts', icon: Wallet },
-  { to: '/activity', label: 'Activity', icon: Timeline },
   { to: '/transfer', label: 'Transfer', icon: Shuffle },
   { to: '/payees', label: 'Payees', icon: Users },
   { to: '/bills', label: 'Bill pay', icon: Receipt },
   { to: '/statements', label: 'Statements', icon: ReceiptText },
   { to: '/messages', label: 'Messages', icon: Mail },
   { to: '/cards', label: 'Cards', icon: CreditCard },
+  { to: '/activity', label: 'User Activity', icon: Timeline },
   { to: '/profile', label: 'Profile', icon: UserRound },
 ];
 
@@ -92,8 +92,8 @@ export function AppLayout({
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f5f3ff' }}>
-      <header className="fixed left-0 right-0 top-0 z-[100] flex h-14 shrink-0 items-center gap-2 border-b border-indigo-900/40 bg-gradient-to-r from-indigo-900 to-purple-900 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-fuchsia-50/40 to-indigo-50/80">
+      <header className="fixed left-0 right-0 top-0 z-[100] flex h-14 shrink-0 items-center gap-2 border-b border-violet-400/25 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 px-4 shadow-sm shadow-violet-500/15">
         <h1 className="flex flex-1 text-lg font-bold tracking-tight text-white">NorthPeak</h1>
         <Button
           variant="ghost"
@@ -116,7 +116,7 @@ export function AppLayout({
         </Button>
       </header>
 
-      <div className="scrollbar-none flex gap-1 overflow-x-auto border-b border-neutral-200/80 bg-white/90 px-2 py-2 md:hidden">
+      <div className="scrollbar-none flex gap-1 overflow-x-auto border-b border-violet-200/70 bg-white/85 px-2 py-2 backdrop-blur-sm md:hidden">
         {nav.map((item) => {
           const active = navActive(item.to);
           const Icon = item.icon;
@@ -141,11 +141,11 @@ export function AppLayout({
       </div>
 
       <aside
-        className="fixed bottom-0 left-0 top-14 z-30 hidden w-[260px] flex-col overflow-y-auto border-r border-neutral-800/60 bg-neutral-950/70 px-2 py-4 backdrop-blur-md md:flex"
+        className="fixed bottom-0 left-0 top-14 z-30 hidden w-[260px] flex-col overflow-y-auto border-r border-white/10 bg-gradient-to-b from-indigo-950/92 via-violet-900/88 to-fuchsia-950/85 px-2 py-4 shadow-inner shadow-black/10 backdrop-blur-lg md:flex"
         style={{ width: SIDEBAR_W }}
         aria-label="Sidebar"
       >
-        <div className="text-muted px-2 pb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Menu</div>
+        <div className="text-muted px-2 pb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">Menu</div>
         <nav className="flex flex-col gap-0.5">{navItems}</nav>
         <div className="mt-auto border-t border-white/10 pt-4">
           <p className="px-3 text-[10px] font-semibold uppercase tracking-wide text-white/45">Signed in as</p>

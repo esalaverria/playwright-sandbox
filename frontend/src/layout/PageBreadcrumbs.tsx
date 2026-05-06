@@ -3,7 +3,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 const ROUTE_LABELS: Record<string, string> = {
   accounts: 'Accounts',
-  activity: 'Activity',
+  activity: 'User activity',
   transfer: 'Transfer',
   payees: 'Payees',
   bills: 'Bill pay',

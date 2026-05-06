@@ -179,7 +179,7 @@ export function AccountsPage() {
                 <th className="px-4 py-3 text-left font-semibold text-neutral-700">Type</th>
                 <th className="px-4 py-3 text-left font-semibold text-neutral-700">Balance</th>
                 <th className="px-4 py-3 text-left font-semibold text-neutral-700">Account number</th>
-                <th className="px-4 py-3 text-right font-semibold text-neutral-700">Actions</th>
+                <th className="px-4 py-3 text-center font-semibold text-neutral-700">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
@@ -217,9 +217,9 @@ export function AccountsPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <div className="flex flex-wrap justify-center gap-2">
                       <RouterLink to={`/accounts/${a.id}`} className={linkOutline}>
-                        Activity
+                        View transactions
                       </RouterLink>
                       <Button variant="danger-soft" size="sm" onPress={() => setCloseId(a.id)} isDisabled={!!a.closedAt}>
                         Close

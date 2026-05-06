@@ -59,9 +59,9 @@ test.describe('NorthPeak smoke', { tag: '@smoke' }, () => {
       await page.goto('/transfer');
       const internalForm = page.locator('form[data-transfer-kind="internal"]');
       await expect(internalForm).toBeVisible();
-      await internalForm.getByRole('combobox', { name: 'From' }).click();
+      await internalForm.locator('[aria-label="From"]').click();
       await page.getByRole('option', { name: /River checking/i }).click();
-      await internalForm.getByRole('combobox', { name: 'To' }).click();
+      await internalForm.locator('[aria-label="To"]').click();
       await page.getByRole('option', { name: /Growth savings/i }).click();
       await internalForm.getByRole('textbox', { name: /amount/i }).fill('10.00');
       await internalForm.getByRole('button', { name: /submit internal transfer/i }).click();
@@ -73,8 +73,8 @@ test.describe('NorthPeak smoke', { tag: '@smoke' }, () => {
       await login.goto();
       await login.loginAndWaitForDashboard(bobEmail, alicePassword);
 
-      const bobCheckingCard = page.locator('a').filter({ has: page.getByRole('heading', { name: 'Checking', exact: true }) });
-      const beforeCents = parseUsdToCents(await bobCheckingCard.locator('h5').textContent());
+      const bobCheckingCard = page.getByRole('link', { name: /••2100/ });
+      const beforeCents = parseUsdToCents(await bobCheckingCard.getByText(/\$[\d,]+\.\d{2}/).textContent());
 
       await page.getByRole('button', { name: /logout/i }).click();
       await expect(page).toHaveURL(/\/login$/);
@@ -82,14 +82,13 @@ test.describe('NorthPeak smoke', { tag: '@smoke' }, () => {
       await login.loginAndWaitForDashboard(aliceEmail, alicePassword);
 
       await page.goto('/transfer');
-      const previewReady = page.waitForResponse((r) => r.url().includes('/recipients/preview') && r.ok());
       await page.getByRole('tab', { name: /send to someone/i }).click();
-      await previewReady;
+      await expect(page.getByRole('button', { name: /From your account/i })).toBeVisible({ timeout: 15000 });
 
-      await page.getByLabel(/From your account/).click();
+      await page.getByRole('button', { name: /From your account/i }).click();
       await page.getByRole('option', { name: /River checking/i }).click();
 
-      await expect(page.getByLabel(/To their account/)).toBeEnabled();
+      await expect(page.getByRole('button', { name: /To their account/i })).toBeEnabled();
       await page.locator('form[data-transfer-kind="peer"]').getByRole('textbox', { name: /amount/i }).fill('1.00');
       await page.getByRole('button', { name: /send money/i }).click();
       await expect(page.getByRole('alert').filter({ hasText: /^sent/i })).toBeVisible();
@@ -100,7 +99,7 @@ test.describe('NorthPeak smoke', { tag: '@smoke' }, () => {
       await login.goto();
       await login.loginAndWaitForDashboard(bobEmail, alicePassword);
 
-      const afterCents = parseUsdToCents(await bobCheckingCard.locator('h5').textContent());
+      const afterCents = parseUsdToCents(await bobCheckingCard.getByText(/\$[\d,]+\.\d{2}/).textContent());
       expect(afterCents).toBe(beforeCents + 100);
     });
   });
