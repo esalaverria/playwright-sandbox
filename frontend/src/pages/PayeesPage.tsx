@@ -1,10 +1,31 @@
-import { Button, IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { api } from '../api/client';
+import { useToast } from '../notifications/ToastProvider';
 
 export function PayeesPage() {
   const qc = useQueryClient();
+  const toast = useToast();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
   const list = useQuery({
     queryKey: ['payees'],
     queryFn: async () => {
@@ -18,13 +39,24 @@ export function PayeesPage() {
   const create = useMutation({
     mutationFn: async (payload: { displayName: string; nickname?: string; externalRef: string }) =>
       api.post('/payees', payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['payees'] }),
+    onSuccess: () => {
+      toast('Payee added.');
+      qc.invalidateQueries({ queryKey: ['payees'] });
+    },
+    onError: () => toast('Could not add payee.', 'error'),
   });
 
   const remove = useMutation({
     mutationFn: async (id: string) => api.delete(`/payees/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['payees'] }),
+    onSuccess: () => {
+      toast('Payee removed.');
+      qc.invalidateQueries({ queryKey: ['payees'] });
+      setDeleteId(null);
+    },
+    onError: () => toast('Could not remove payee.', 'error'),
   });
+
+  const pendingDelete = (list.data ?? []).find((p) => p.id === deleteId);
 
   return (
     <Stack spacing={3}>
@@ -58,7 +90,7 @@ export function PayeesPage() {
           </Button>
         </Stack>
       </Paper>
-      <Paper>
+      <Paper sx={{ p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -75,7 +107,7 @@ export function PayeesPage() {
                 <TableCell>{p.nickname ?? '—'}</TableCell>
                 <TableCell>{p.externalRef}</TableCell>
                 <TableCell>
-                  <IconButton aria-label="delete" onClick={() => remove.mutate(p.id)}>
+                  <IconButton aria-label="delete" onClick={() => setDeleteId(p.id)}>
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
@@ -84,6 +116,30 @@ export function PayeesPage() {
           </TableBody>
         </Table>
       </Paper>
+
+      <Dialog open={!!pendingDelete} onClose={() => setDeleteId(null)}>
+        <DialogTitle>Remove payee?</DialogTitle>
+        <DialogContent>
+          {pendingDelete ? (
+            <Typography>
+              Remove <strong>{pendingDelete.displayName}</strong> from your payees? This cannot be undone.
+            </Typography>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteId(null)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={remove.isPending}
+            onClick={() => {
+              if (deleteId) remove.mutate(deleteId);
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

@@ -24,6 +24,12 @@ enum PaymentStatus {
   FAILED
 }
 
+/// Whether the bill row was created as a future schedule or paid immediately.
+enum ScheduledPaymentKind {
+  SCHEDULED
+  INSTANT
+}
+
 enum CardBrand {
   VISA
   MASTERCARD
@@ -101,16 +107,17 @@ model Payee {
 }
 
 model ScheduledPayment {
-  id             String        @id @default(cuid())
+  id             String               @id @default(cuid())
   userId         String
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   billerName     String
   fromAccountId  String
-  fromAccount    Account       @relation(fields: [fromAccountId], references: [id])
+  fromAccount    Account              @relation(fields: [fromAccountId], references: [id])
   amountCents    Int
   dueDate        DateTime
-  status         PaymentStatus @default(SCHEDULED)
+  status         PaymentStatus        @default(SCHEDULED)
   memo           String?
+  kind           ScheduledPaymentKind @default(SCHEDULED)
 }
 
 model Message {

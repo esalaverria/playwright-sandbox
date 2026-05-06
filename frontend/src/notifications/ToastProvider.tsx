@@ -30,9 +30,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           if (reason === 'clickaway') return;
           setOpen(false);
         }}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ mt: 8 }}
       >
-        <Alert severity={severity} variant="filled" onClose={() => setOpen(false)} sx={{ width: '100%' }}>
+        <Alert
+          severity={severity}
+          variant="filled"
+          onClose={() => setOpen(false)}
+          sx={{
+            width: '100%',
+            minWidth: { sm: 360 },
+            py: 1.25,
+            px: 2,
+            fontSize: '1rem',
+            '& .MuiAlert-message': { fontSize: '1rem', fontWeight: 600 },
+          }}
+        >
           {message}
         </Alert>
       </Snackbar>

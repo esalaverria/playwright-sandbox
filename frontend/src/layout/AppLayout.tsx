@@ -29,6 +29,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link as RouterLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { usePrivacy } from '../privacy/PrivacyProvider';
+import { PageBreadcrumbs } from './PageBreadcrumbs';
 
 const drawerWidth = 260;
 
@@ -141,6 +142,7 @@ export function AppLayout({
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3, width: `calc(100% - ${drawerWidth}px)` }}>
         <Toolbar />
+        <PageBreadcrumbs />
         {children ?? <Outlet />}
       </Box>
     </Box>

@@ -1040,7 +1040,8 @@ export const ScheduledPaymentScalarFieldEnum = {
   amountCents: 'amountCents',
   dueDate: 'dueDate',
   status: 'status',
-  memo: 'memo'
+  memo: 'memo',
+  kind: 'kind'
 } as const
 
 export type ScheduledPaymentScalarFieldEnum = (typeof ScheduledPaymentScalarFieldEnum)[keyof typeof ScheduledPaymentScalarFieldEnum]
@@ -1232,6 +1233,20 @@ export type EnumPaymentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'PaymentStatus[]'
  */
 export type ListEnumPaymentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ScheduledPaymentKind'
+ */
+export type EnumScheduledPaymentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ScheduledPaymentKind'>
+    
+
+
+/**
+ * Reference to a field of type 'ScheduledPaymentKind[]'
+ */
+export type ListEnumScheduledPaymentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ScheduledPaymentKind[]'>
     
 
 

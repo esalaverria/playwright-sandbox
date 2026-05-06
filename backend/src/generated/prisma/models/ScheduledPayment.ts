@@ -43,6 +43,7 @@ export type ScheduledPaymentMinAggregateOutputType = {
   dueDate: Date | null
   status: $Enums.PaymentStatus | null
   memo: string | null
+  kind: $Enums.ScheduledPaymentKind | null
 }
 
 export type ScheduledPaymentMaxAggregateOutputType = {
@@ -54,6 +55,7 @@ export type ScheduledPaymentMaxAggregateOutputType = {
   dueDate: Date | null
   status: $Enums.PaymentStatus | null
   memo: string | null
+  kind: $Enums.ScheduledPaymentKind | null
 }
 
 export type ScheduledPaymentCountAggregateOutputType = {
@@ -65,6 +67,7 @@ export type ScheduledPaymentCountAggregateOutputType = {
   dueDate: number
   status: number
   memo: number
+  kind: number
   _all: number
 }
 
@@ -86,6 +89,7 @@ export type ScheduledPaymentMinAggregateInputType = {
   dueDate?: true
   status?: true
   memo?: true
+  kind?: true
 }
 
 export type ScheduledPaymentMaxAggregateInputType = {
@@ -97,6 +101,7 @@ export type ScheduledPaymentMaxAggregateInputType = {
   dueDate?: true
   status?: true
   memo?: true
+  kind?: true
 }
 
 export type ScheduledPaymentCountAggregateInputType = {
@@ -108,6 +113,7 @@ export type ScheduledPaymentCountAggregateInputType = {
   dueDate?: true
   status?: true
   memo?: true
+  kind?: true
   _all?: true
 }
 
@@ -206,6 +212,7 @@ export type ScheduledPaymentGroupByOutputType = {
   dueDate: Date
   status: $Enums.PaymentStatus
   memo: string | null
+  kind: $Enums.ScheduledPaymentKind
   _count: ScheduledPaymentCountAggregateOutputType | null
   _avg: ScheduledPaymentAvgAggregateOutputType | null
   _sum: ScheduledPaymentSumAggregateOutputType | null
@@ -240,6 +247,7 @@ export type ScheduledPaymentWhereInput = {
   dueDate?: Prisma.DateTimeFilter<"ScheduledPayment"> | Date | string
   status?: Prisma.EnumPaymentStatusFilter<"ScheduledPayment"> | $Enums.PaymentStatus
   memo?: Prisma.StringNullableFilter<"ScheduledPayment"> | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFilter<"ScheduledPayment"> | $Enums.ScheduledPaymentKind
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   fromAccount?: Prisma.XOR<Prisma.AccountScalarRelationFilter, Prisma.AccountWhereInput>
 }
@@ -253,6 +261,7 @@ export type ScheduledPaymentOrderByWithRelationInput = {
   dueDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
   memo?: Prisma.SortOrderInput | Prisma.SortOrder
+  kind?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   fromAccount?: Prisma.AccountOrderByWithRelationInput
 }
@@ -269,6 +278,7 @@ export type ScheduledPaymentWhereUniqueInput = Prisma.AtLeast<{
   dueDate?: Prisma.DateTimeFilter<"ScheduledPayment"> | Date | string
   status?: Prisma.EnumPaymentStatusFilter<"ScheduledPayment"> | $Enums.PaymentStatus
   memo?: Prisma.StringNullableFilter<"ScheduledPayment"> | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFilter<"ScheduledPayment"> | $Enums.ScheduledPaymentKind
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   fromAccount?: Prisma.XOR<Prisma.AccountScalarRelationFilter, Prisma.AccountWhereInput>
 }, "id">
@@ -282,6 +292,7 @@ export type ScheduledPaymentOrderByWithAggregationInput = {
   dueDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
   memo?: Prisma.SortOrderInput | Prisma.SortOrder
+  kind?: Prisma.SortOrder
   _count?: Prisma.ScheduledPaymentCountOrderByAggregateInput
   _avg?: Prisma.ScheduledPaymentAvgOrderByAggregateInput
   _max?: Prisma.ScheduledPaymentMaxOrderByAggregateInput
@@ -301,6 +312,7 @@ export type ScheduledPaymentScalarWhereWithAggregatesInput = {
   dueDate?: Prisma.DateTimeWithAggregatesFilter<"ScheduledPayment"> | Date | string
   status?: Prisma.EnumPaymentStatusWithAggregatesFilter<"ScheduledPayment"> | $Enums.PaymentStatus
   memo?: Prisma.StringNullableWithAggregatesFilter<"ScheduledPayment"> | string | null
+  kind?: Prisma.EnumScheduledPaymentKindWithAggregatesFilter<"ScheduledPayment"> | $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentCreateInput = {
@@ -310,6 +322,7 @@ export type ScheduledPaymentCreateInput = {
   dueDate: Date | string
   status?: $Enums.PaymentStatus
   memo?: string | null
+  kind?: $Enums.ScheduledPaymentKind
   user: Prisma.UserCreateNestedOneWithoutScheduledPaymentsInput
   fromAccount: Prisma.AccountCreateNestedOneWithoutScheduledPaymentsFromInput
 }
@@ -323,6 +336,7 @@ export type ScheduledPaymentUncheckedCreateInput = {
   dueDate: Date | string
   status?: $Enums.PaymentStatus
   memo?: string | null
+  kind?: $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentUpdateInput = {
@@ -332,6 +346,7 @@ export type ScheduledPaymentUpdateInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
   user?: Prisma.UserUpdateOneRequiredWithoutScheduledPaymentsNestedInput
   fromAccount?: Prisma.AccountUpdateOneRequiredWithoutScheduledPaymentsFromNestedInput
 }
@@ -345,6 +360,7 @@ export type ScheduledPaymentUncheckedUpdateInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentCreateManyInput = {
@@ -356,6 +372,7 @@ export type ScheduledPaymentCreateManyInput = {
   dueDate: Date | string
   status?: $Enums.PaymentStatus
   memo?: string | null
+  kind?: $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentUpdateManyMutationInput = {
@@ -365,6 +382,7 @@ export type ScheduledPaymentUpdateManyMutationInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentUncheckedUpdateManyInput = {
@@ -376,6 +394,7 @@ export type ScheduledPaymentUncheckedUpdateManyInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentListRelationFilter = {
@@ -397,6 +416,7 @@ export type ScheduledPaymentCountOrderByAggregateInput = {
   dueDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
   memo?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
 }
 
 export type ScheduledPaymentAvgOrderByAggregateInput = {
@@ -412,6 +432,7 @@ export type ScheduledPaymentMaxOrderByAggregateInput = {
   dueDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
   memo?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
 }
 
 export type ScheduledPaymentMinOrderByAggregateInput = {
@@ -423,6 +444,7 @@ export type ScheduledPaymentMinOrderByAggregateInput = {
   dueDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
   memo?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
 }
 
 export type ScheduledPaymentSumOrderByAggregateInput = {
@@ -517,6 +539,10 @@ export type EnumPaymentStatusFieldUpdateOperationsInput = {
   set?: $Enums.PaymentStatus
 }
 
+export type EnumScheduledPaymentKindFieldUpdateOperationsInput = {
+  set?: $Enums.ScheduledPaymentKind
+}
+
 export type ScheduledPaymentCreateWithoutUserInput = {
   id?: string
   billerName: string
@@ -524,6 +550,7 @@ export type ScheduledPaymentCreateWithoutUserInput = {
   dueDate: Date | string
   status?: $Enums.PaymentStatus
   memo?: string | null
+  kind?: $Enums.ScheduledPaymentKind
   fromAccount: Prisma.AccountCreateNestedOneWithoutScheduledPaymentsFromInput
 }
 
@@ -535,6 +562,7 @@ export type ScheduledPaymentUncheckedCreateWithoutUserInput = {
   dueDate: Date | string
   status?: $Enums.PaymentStatus
   memo?: string | null
+  kind?: $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentCreateOrConnectWithoutUserInput = {
@@ -575,6 +603,7 @@ export type ScheduledPaymentScalarWhereInput = {
   dueDate?: Prisma.DateTimeFilter<"ScheduledPayment"> | Date | string
   status?: Prisma.EnumPaymentStatusFilter<"ScheduledPayment"> | $Enums.PaymentStatus
   memo?: Prisma.StringNullableFilter<"ScheduledPayment"> | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFilter<"ScheduledPayment"> | $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentCreateWithoutFromAccountInput = {
@@ -584,6 +613,7 @@ export type ScheduledPaymentCreateWithoutFromAccountInput = {
   dueDate: Date | string
   status?: $Enums.PaymentStatus
   memo?: string | null
+  kind?: $Enums.ScheduledPaymentKind
   user: Prisma.UserCreateNestedOneWithoutScheduledPaymentsInput
 }
 
@@ -595,6 +625,7 @@ export type ScheduledPaymentUncheckedCreateWithoutFromAccountInput = {
   dueDate: Date | string
   status?: $Enums.PaymentStatus
   memo?: string | null
+  kind?: $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentCreateOrConnectWithoutFromAccountInput = {
@@ -631,6 +662,7 @@ export type ScheduledPaymentCreateManyUserInput = {
   dueDate: Date | string
   status?: $Enums.PaymentStatus
   memo?: string | null
+  kind?: $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentUpdateWithoutUserInput = {
@@ -640,6 +672,7 @@ export type ScheduledPaymentUpdateWithoutUserInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
   fromAccount?: Prisma.AccountUpdateOneRequiredWithoutScheduledPaymentsFromNestedInput
 }
 
@@ -651,6 +684,7 @@ export type ScheduledPaymentUncheckedUpdateWithoutUserInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentUncheckedUpdateManyWithoutUserInput = {
@@ -661,6 +695,7 @@ export type ScheduledPaymentUncheckedUpdateManyWithoutUserInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentCreateManyFromAccountInput = {
@@ -671,6 +706,7 @@ export type ScheduledPaymentCreateManyFromAccountInput = {
   dueDate: Date | string
   status?: $Enums.PaymentStatus
   memo?: string | null
+  kind?: $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentUpdateWithoutFromAccountInput = {
@@ -680,6 +716,7 @@ export type ScheduledPaymentUpdateWithoutFromAccountInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
   user?: Prisma.UserUpdateOneRequiredWithoutScheduledPaymentsNestedInput
 }
 
@@ -691,6 +728,7 @@ export type ScheduledPaymentUncheckedUpdateWithoutFromAccountInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
 }
 
 export type ScheduledPaymentUncheckedUpdateManyWithoutFromAccountInput = {
@@ -701,6 +739,7 @@ export type ScheduledPaymentUncheckedUpdateManyWithoutFromAccountInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   memo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumScheduledPaymentKindFieldUpdateOperationsInput | $Enums.ScheduledPaymentKind
 }
 
 
@@ -714,6 +753,7 @@ export type ScheduledPaymentSelect<ExtArgs extends runtime.Types.Extensions.Inte
   dueDate?: boolean
   status?: boolean
   memo?: boolean
+  kind?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   fromAccount?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["scheduledPayment"]>
@@ -727,6 +767,7 @@ export type ScheduledPaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   dueDate?: boolean
   status?: boolean
   memo?: boolean
+  kind?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   fromAccount?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["scheduledPayment"]>
@@ -740,6 +781,7 @@ export type ScheduledPaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   dueDate?: boolean
   status?: boolean
   memo?: boolean
+  kind?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   fromAccount?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["scheduledPayment"]>
@@ -753,9 +795,10 @@ export type ScheduledPaymentSelectScalar = {
   dueDate?: boolean
   status?: boolean
   memo?: boolean
+  kind?: boolean
 }
 
-export type ScheduledPaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "billerName" | "fromAccountId" | "amountCents" | "dueDate" | "status" | "memo", ExtArgs["result"]["scheduledPayment"]>
+export type ScheduledPaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "billerName" | "fromAccountId" | "amountCents" | "dueDate" | "status" | "memo" | "kind", ExtArgs["result"]["scheduledPayment"]>
 export type ScheduledPaymentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   fromAccount?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
@@ -784,6 +827,7 @@ export type $ScheduledPaymentPayload<ExtArgs extends runtime.Types.Extensions.In
     dueDate: Date
     status: $Enums.PaymentStatus
     memo: string | null
+    kind: $Enums.ScheduledPaymentKind
   }, ExtArgs["result"]["scheduledPayment"]>
   composites: {}
 }
@@ -1217,6 +1261,7 @@ export interface ScheduledPaymentFieldRefs {
   readonly dueDate: Prisma.FieldRef<"ScheduledPayment", 'DateTime'>
   readonly status: Prisma.FieldRef<"ScheduledPayment", 'PaymentStatus'>
   readonly memo: Prisma.FieldRef<"ScheduledPayment", 'String'>
+  readonly kind: Prisma.FieldRef<"ScheduledPayment", 'ScheduledPaymentKind'>
 }
     
 

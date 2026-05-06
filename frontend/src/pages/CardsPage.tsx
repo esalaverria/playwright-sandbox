@@ -1,7 +1,7 @@
 import CreditCardIcon from '@mui/icons-material/CreditCard';
+import AddIcon from '@mui/icons-material/Add';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -50,10 +50,27 @@ type CardSensitive = {
   brand: string | null;
 };
 
+function apiErrorMessage(err: unknown, fallback: string): string {
+  const e = err as { response?: { data?: { message?: string | string[] } } };
+  const m = e.response?.data?.message;
+  if (Array.isArray(m)) return m[0] ?? fallback;
+  if (typeof m === 'string') return m;
+  return fallback;
+}
+
+function formatExp(m?: number | null, y?: number | null): string {
+  if (m == null || y == null) return '—';
+  return `${String(m).padStart(2, '0')}/${y}`;
+}
+
 export function CardsPage() {
   const qc = useQueryClient();
   const toast = useToast();
   const { formatMoney } = usePrivacy();
+  const [openNewCard, setOpenNewCard] = useState(false);
+  const [cardNick, setCardNick] = useState('');
+  const [cardBrand, setCardBrand] = useState<'VISA' | 'MASTERCARD'>('VISA');
+
   const accounts = useQuery({
     queryKey: ['accounts'],
     queryFn: async () => {
@@ -64,6 +81,22 @@ export function CardsPage() {
 
   const creditCards = (accounts.data ?? []).filter((a) => a.type === 'CREDIT');
   const fundingAccounts = (accounts.data ?? []).filter((a) => a.type === 'CHECKING' || a.type === 'SAVINGS');
+
+  const requestCard = useMutation({
+    mutationFn: async () =>
+      api.post('/accounts/credit-cards', {
+        nickname: cardNick.trim() || undefined,
+        brand: cardBrand,
+      }),
+    onSuccess: async () => {
+      toast('New card added to your wallet.');
+      setOpenNewCard(false);
+      setCardNick('');
+      await qc.invalidateQueries({ queryKey: ['accounts'] });
+      await qc.invalidateQueries({ queryKey: ['activity-log'] });
+    },
+    onError: (e) => toast(apiErrorMessage(e, 'Could not add card.'), 'error'),
+  });
 
   const toggleFreeze = useMutation({
     mutationFn: async (payload: { id: string; frozen: boolean }) =>
@@ -101,15 +134,25 @@ export function CardsPage() {
     onError: () => toast('Payment failed — check funds or card status.', 'error'),
   });
 
-  const lifecycleMut = useMutation({
-    mutationFn: async (payload: { id: string; lifecycle: 'CANCELLED' | 'LOST_REPORTED' }) =>
-      api.patch(`/accounts/${payload.id}/card-lifecycle`, { lifecycle: payload.lifecycle }),
-    onSuccess: async (_, v) => {
-      toast(v.lifecycle === 'CANCELLED' ? 'Card cancelled.' : 'Card reported lost — we froze it.');
+  const cancelCard = useMutation({
+    mutationFn: async (id: string) => api.patch(`/accounts/${id}/card-lifecycle`, { lifecycle: 'CANCELLED' }),
+    onSuccess: async () => {
+      toast('Card cancelled.');
       await qc.invalidateQueries({ queryKey: ['accounts'] });
       await qc.invalidateQueries({ queryKey: ['activity-log'] });
     },
-    onError: () => toast('Could not update card.', 'error'),
+    onError: (e) => toast(apiErrorMessage(e, 'Could not cancel card.'), 'error'),
+  });
+
+  const reportLostReplace = useMutation({
+    mutationFn: async (id: string) => api.post(`/accounts/${id}/report-lost-replace`),
+    onSuccess: async () => {
+      toast('Replacement card issued — balances and history moved.');
+      await qc.invalidateQueries({ queryKey: ['accounts'] });
+      await qc.invalidateQueries({ queryKey: ['activity-log'] });
+      await qc.invalidateQueries({ queryKey: ['tx'] });
+    },
+    onError: (e) => toast(apiErrorMessage(e, 'Could not replace card.'), 'error'),
   });
 
   const [payFromByCard, setPayFromByCard] = useState<Record<string, string>>({});
@@ -124,17 +167,29 @@ export function CardsPage() {
     await qc.invalidateQueries({ queryKey: ['activity-log'] });
   }
 
+  function hideSensitive(id: string) {
+    setRevealDetails((m) => {
+      const next = { ...m };
+      delete next[id];
+      return next;
+    });
+  }
 
   return (
     <Stack spacing={3}>
-      <div>
-        <Typography variant="h4" fontWeight={800}>
-          Cards
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Pay balances, manage limits, and view demo card numbers safely in this sandbox.
-        </Typography>
-      </div>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ sm: 'flex-start' }}>
+        <div>
+          <Typography variant="h4" fontWeight={800}>
+            Cards
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Pay balances, manage limits, and view demo card numbers safely in this sandbox.
+          </Typography>
+        </div>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenNewCard(true)} sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}>
+          Add new card
+        </Button>
+      </Stack>
 
       {creditCards.map((c) => {
         const limit = c.creditLimitCents;
@@ -152,12 +207,12 @@ export function CardsPage() {
             key={c.id}
             elevation={0}
             sx={{
-              p: 2.5,
-              borderRadius: 3,
+              p: 3,
+              borderRadius: 2,
               border: '1px solid',
               borderColor: 'divider',
-              background: (t) =>
-                `linear-gradient(135deg, ${t.palette.primary.light}22 0%, ${t.palette.secondary.light}18 100%)`,
+              bgcolor: 'background.paper',
+              boxShadow: (t) => t.shadows[1],
             }}
           >
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ md: 'flex-start' }}>
@@ -168,10 +223,10 @@ export function CardsPage() {
                     {c.nickname}
                   </Typography>
                   <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
-                    <Chip size="small" label={brand} color="primary" variant="filled" />
+                    <Chip size="small" label={brand} variant="outlined" />
                     <Chip
                       size="small"
-                      label={c.cardLifecycle.replace('_', ' ')}
+                      label={c.cardLifecycle.replace(/_/g, ' ')}
                       color={isActive ? 'success' : 'default'}
                       variant="outlined"
                     />
@@ -201,14 +256,9 @@ export function CardsPage() {
                   value={util}
                   sx={{
                     mt: 1.5,
-                    height: 10,
-                    borderRadius: 999,
+                    height: 8,
+                    borderRadius: 1,
                     bgcolor: 'action.hover',
-                    '& .MuiLinearProgress-bar': {
-                      borderRadius: 999,
-                      background: (t) =>
-                        `linear-gradient(90deg, ${t.palette.primary.main}, ${t.palette.secondary.main})`,
-                    },
                   }}
                 />
               </>
@@ -218,8 +268,8 @@ export function CardsPage() {
               </Typography>
             )}
 
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }} display="block">
-              Expires {c.expMonth != null && c.expYear != null ? `${String(c.expMonth).padStart(2, '0')}/${c.expYear}` : '—'}
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+              Expires {formatExp(c.expMonth, c.expYear)}
             </Typography>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
@@ -245,13 +295,13 @@ export function CardsPage() {
               />
             </Stack>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
               <Button
                 size="small"
                 variant="outlined"
                 color="warning"
-                disabled={!isActive}
-                onClick={() => lifecycleMut.mutate({ id: c.id, lifecycle: 'CANCELLED' })}
+                disabled={!isActive || cancelCard.isPending}
+                onClick={() => cancelCard.mutate(c.id)}
               >
                 Cancel card
               </Button>
@@ -260,23 +310,60 @@ export function CardsPage() {
                 variant="outlined"
                 color="error"
                 startIcon={<WarningAmberIcon />}
-                disabled={!isActive}
+                disabled={!isActive || reportLostReplace.isPending}
                 onClick={() => setLostDialog(c.id)}
               >
                 Report lost
               </Button>
-              <Button size="small" variant="text" onClick={() => fetchSensitive(c.id)}>
-                Reveal card numbers
-              </Button>
+              {!sens ? (
+                <Button size="small" variant="text" onClick={() => fetchSensitive(c.id)}>
+                  Reveal card numbers
+                </Button>
+              ) : (
+                <Button size="small" variant="text" color="inherit" onClick={() => hideSensitive(c.id)}>
+                  Hide card numbers
+                </Button>
+              )}
             </Stack>
 
             {sens ? (
-              <Alert severity="info" sx={{ mt: 2 }} variant="outlined">
-                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                  {sens.panFull?.replace(/(\d{4})/g, '$1 ').trim()}
-                </Typography>
-                <Typography variant="body2">CVV {sens.cvv}</Typography>
-              </Alert>
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: (t) => (t.palette.mode === 'light' ? 'grey.50' : 'action.hover'),
+                }}
+              >
+                <Stack spacing={0.75}>
+                  <Typography variant="caption" color="text.secondary">
+                    Card number
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontFamily: 'ui-monospace, monospace', letterSpacing: 0.5 }}>
+                    {sens.panFull?.replace(/(\d{4})/g, '$1 ').trim()}
+                  </Typography>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ pt: 1 }}>
+                    <div>
+                      <Typography variant="caption" color="text.secondary">
+                        CVV
+                      </Typography>
+                      <Typography variant="body1" fontWeight={600}>
+                        {sens.cvv ?? '—'}
+                      </Typography>
+                    </div>
+                    <div>
+                      <Typography variant="caption" color="text.secondary">
+                        Exp date
+                      </Typography>
+                      <Typography variant="body1" fontWeight={600}>
+                        {formatExp(sens.expMonth, sens.expYear)}
+                      </Typography>
+                    </div>
+                  </Stack>
+                </Stack>
+              </Box>
             ) : null}
 
             <Typography variant="subtitle1" fontWeight={700} sx={{ mt: 3, mb: 1 }}>
@@ -347,27 +434,54 @@ export function CardsPage() {
       })}
 
       <Dialog open={!!lostDialog} onClose={() => setLostDialog(null)}>
-        <DialogTitle>Report card lost?</DialogTitle>
+        <DialogTitle>Replace lost card?</DialogTitle>
         <DialogContent>
-          <Typography>We&apos;ll freeze this card and mark it as lost. You can request a replacement from Accounts.</Typography>
+          <Typography>
+            We&apos;ll issue a new card with new numbers, move your balance and transaction history to it, and close the lost card.
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setLostDialog(null)}>Back</Button>
           <Button
             color="error"
             variant="contained"
-            onClick={() => {
-              if (lostDialog) lifecycleMut.mutate({ id: lostDialog, lifecycle: 'LOST_REPORTED' });
-              setLostDialog(null);
+            disabled={reportLostReplace.isPending}
+            onClick={async () => {
+              if (!lostDialog) return;
+              try {
+                await reportLostReplace.mutateAsync(lostDialog);
+                setLostDialog(null);
+              } catch {
+                /* toast shows error */
+              }
             }}
           >
-            Confirm
+            Confirm replacement
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openNewCard} onClose={() => setOpenNewCard(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Add new card</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField label="Nickname (optional)" value={cardNick} onChange={(e) => setCardNick(e.target.value)} fullWidth />
+            <TextField select label="Brand" value={cardBrand} onChange={(e) => setCardBrand(e.target.value as 'VISA' | 'MASTERCARD')} fullWidth>
+              <MenuItem value="VISA">Visa</MenuItem>
+              <MenuItem value="MASTERCARD">Mastercard</MenuItem>
+            </TextField>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenNewCard(false)}>Cancel</Button>
+          <Button variant="contained" disabled={requestCard.isPending} onClick={() => requestCard.mutate()}>
+            Add card
           </Button>
         </DialogActions>
       </Dialog>
 
       {creditCards.length === 0 ? (
-        <Typography color="text.secondary">No credit accounts yet — request one under Accounts.</Typography>
+        <Typography color="text.secondary">No credit accounts yet — use Add new card above or open one under Accounts.</Typography>
       ) : null}
     </Stack>
   );

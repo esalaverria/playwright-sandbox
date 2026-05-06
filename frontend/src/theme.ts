@@ -20,7 +20,7 @@ export const theme = createTheme({
       paper: '#ffffff',
     },
   },
-  shape: { borderRadius: 16 },
+  shape: { borderRadius: 10 },
   components: {
     MuiButton: {
       styleOverrides: {

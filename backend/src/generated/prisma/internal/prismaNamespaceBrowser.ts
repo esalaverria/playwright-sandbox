@@ -149,7 +149,8 @@ export const ScheduledPaymentScalarFieldEnum = {
   amountCents: 'amountCents',
   dueDate: 'dueDate',
   status: 'status',
-  memo: 'memo'
+  memo: 'memo',
+  kind: 'kind'
 } as const
 
 export type ScheduledPaymentScalarFieldEnum = (typeof ScheduledPaymentScalarFieldEnum)[keyof typeof ScheduledPaymentScalarFieldEnum]

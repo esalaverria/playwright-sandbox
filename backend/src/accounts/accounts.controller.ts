@@ -52,8 +52,8 @@ class CloseAccountDto {
 }
 
 class CardLifecycleBodyDto {
-  @IsIn([CLS.CANCELLED, CLS.LOST_REPORTED])
-  lifecycle!: typeof CLS.CANCELLED | typeof CLS.LOST_REPORTED;
+  @IsIn([CLS.CANCELLED])
+  lifecycle!: typeof CLS.CANCELLED;
 }
 
 @Controller('accounts')
@@ -158,6 +158,14 @@ export class AccountsController {
     @Body() dto: CardLifecycleBodyDto,
   ) {
     return this.accounts.setCardLifecycle(req.user.userId, id, dto.lifecycle);
+  }
+
+  @Post(':id/report-lost-replace')
+  async reportLostReplace(
+    @Req() req: Request & { user: { userId: string } },
+    @Param('id') id: string,
+  ) {
+    return this.accounts.reportLostAndReplace(req.user.userId, id);
   }
 
   @Patch(':id/freeze')

@@ -33,6 +33,8 @@ export function TransferPage() {
     },
   });
 
+  const fromAccounts = (accounts ?? []).filter((a) => a.type === 'CHECKING' || a.type === 'SAVINGS');
+
   const internal = useMutation({
     mutationFn: async (payload: { fromAccountId: string; toAccountId: string; amountCents: number; memo?: string }) =>
       api.post('/transfers/internal', payload),
@@ -96,6 +98,9 @@ export function TransferPage() {
         <Tab label="Between my accounts" data-transfer-kind="internal" />
         <Tab label="Send to someone" data-transfer-kind="peer" />
       </Tabs>
+      <Typography variant="body2" color="text.secondary" maxWidth={560}>
+        Transfers can only come from checking or savings. Credit cards are for payments (Pay card, Bill pay), not moving money to yourself or others.
+      </Typography>
 
       {tab === 0 ? (
         <Box
@@ -118,7 +123,7 @@ export function TransferPage() {
               <MenuItem value="" disabled>
                 Select account
               </MenuItem>
-              {(accounts ?? []).map((a) => (
+              {fromAccounts.map((a) => (
                 <MenuItem key={a.id} value={a.id}>
                   {a.nickname} ({formatMoney(a.balanceCents)})
                 </MenuItem>
@@ -176,7 +181,7 @@ export function TransferPage() {
               <MenuItem value="" disabled>
                 Select account
               </MenuItem>
-              {(accounts ?? []).map((a) => (
+              {fromAccounts.map((a) => (
                 <MenuItem key={a.id} value={a.id}>
                   {a.nickname} ({formatMoney(a.balanceCents)})
                 </MenuItem>

@@ -5,7 +5,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AccountType, LedgerStatus } from '../generated/prisma/client';
-import { CardLifecycleStatus } from '../generated/prisma/enums';
+import {
+  canReceiveTransferCredit,
+  canUseAsDebitSourceForBanking,
+  isDeposit,
+} from '../accounts/account-policy';
 import { PrismaService } from '../prisma/prisma.service';
 
 type CreditCapAccount = {
@@ -52,19 +56,39 @@ export class TransfersService {
       const from = await tx.account.findFirst({ where: { id: body.fromAccountId, userId } });
       const to = await tx.account.findFirst({ where: { id: body.toAccountId, userId } });
       if (!from || !to) throw new ForbiddenException('Accounts must belong to you');
-      if (from.closedAt || to.closedAt) {
-        throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Account is closed' });
-      }
       if (from.type === AccountType.CREDIT) {
-        if (from.cardLifecycle !== CardLifecycleStatus.ACTIVE) {
-          throw new BadRequestException({ code: 'CARD_INACTIVE', message: 'Card is no longer active' });
-        }
-        if (from.frozen) {
-          throw new BadRequestException({ code: 'CARD_FROZEN', message: 'Card is frozen' });
-        }
+        throw new BadRequestException({
+          code: 'CARD_CANNOT_SEND_TRANSFER',
+          message:
+            'Credit cards cannot send transfers between accounts or to other people. Use Pay card or Bill pay for payments.',
+        });
+      }
+      const fromOk = canUseAsDebitSourceForBanking(from);
+      if (!fromOk.ok) {
+        throw new BadRequestException({
+          code: 'FROM_ACCOUNT_UNAVAILABLE',
+          message:
+            fromOk.reason === 'closed'
+              ? 'Source account is closed.'
+              : fromOk.reason === 'frozen'
+                ? 'Source account is frozen.'
+                : 'Source account cannot be used.',
+        });
+      }
+      const toRecv = canReceiveTransferCredit(to);
+      if (!toRecv.ok) {
+        throw new BadRequestException({
+          code: 'TO_ACCOUNT_UNAVAILABLE',
+          message:
+            toRecv.reason === 'closed'
+              ? 'Destination account is closed.'
+              : toRecv.reason === 'frozen'
+                ? 'Destination account is frozen.'
+                : 'Destination cannot receive transfers.',
+        });
       }
       if (
-        (from.type === AccountType.CHECKING || from.type === AccountType.SAVINGS) &&
+        isDeposit(from) &&
         from.balanceCents < body.amountCents
       ) {
         throw new BadRequestException({ code: 'INSUFFICIENT_FUNDS', message: 'Insufficient funds' });
@@ -117,11 +141,12 @@ export class TransfersService {
     }
     const from = await this.prisma.account.findFirst({ where: { id: fromAccountId, userId } });
     if (!from) throw new NotFoundException('Source account not found');
-    if (from.closedAt) {
-      throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Account is closed' });
-    }
-    if (from.type !== AccountType.CHECKING && from.type !== AccountType.SAVINGS) {
-      throw new BadRequestException({ code: 'INVALID_PAY_FROM', message: 'Pay from a checking or savings account' });
+    const fromOk = canUseAsDebitSourceForBanking(from);
+    if (!fromOk.ok) {
+      throw new BadRequestException({
+        code: 'INVALID_PAY_FROM',
+        message: 'Pay from an open checking or savings account that is not frozen.',
+      });
     }
     return this.internal(userId, {
       fromAccountId,
@@ -156,31 +181,45 @@ export class TransfersService {
       where: { id: body.toAccountId, userId: recipient.id },
     });
     if (!toAcc) throw new NotFoundException({ code: 'UNKNOWN_ACCOUNT', message: 'Destination account not found for recipient' });
-    if (toAcc.closedAt) {
-      throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Destination account is closed' });
-    }
-    if (toAcc.type === AccountType.CREDIT && toAcc.cardLifecycle !== CardLifecycleStatus.ACTIVE) {
-      throw new BadRequestException({ code: 'CARD_INACTIVE', message: 'Cannot send to this card' });
-    }
 
     const sender = await this.prisma.user.findUnique({ where: { id: userId } });
 
     return this.prisma.$transaction(async (tx) => {
       const from = await tx.account.findFirst({ where: { id: body.fromAccountId, userId } });
       if (!from) throw new ForbiddenException('Source account not found');
-      if (from.closedAt) {
-        throw new BadRequestException({ code: 'ACCOUNT_CLOSED', message: 'Account is closed' });
-      }
       if (from.type === AccountType.CREDIT) {
-        if (from.cardLifecycle !== CardLifecycleStatus.ACTIVE) {
-          throw new BadRequestException({ code: 'CARD_INACTIVE', message: 'Card is no longer active' });
-        }
-        if (from.frozen) {
-          throw new BadRequestException({ code: 'CARD_FROZEN', message: 'Card is frozen' });
-        }
+        throw new BadRequestException({
+          code: 'CARD_CANNOT_SEND_TRANSFER',
+          message:
+            'Credit cards cannot send transfers between accounts or to other people. Use Pay card or Bill pay for payments.',
+        });
+      }
+      const fromOk = canUseAsDebitSourceForBanking(from);
+      if (!fromOk.ok) {
+        throw new BadRequestException({
+          code: 'FROM_ACCOUNT_UNAVAILABLE',
+          message:
+            fromOk.reason === 'closed'
+              ? 'Source account is closed.'
+              : fromOk.reason === 'frozen'
+                ? 'Source account is frozen.'
+                : 'Source account cannot be used.',
+        });
+      }
+      const toRecv = canReceiveTransferCredit(toAcc);
+      if (!toRecv.ok) {
+        throw new BadRequestException({
+          code: 'TO_ACCOUNT_UNAVAILABLE',
+          message:
+            toRecv.reason === 'closed'
+              ? 'Destination account is closed.'
+              : toRecv.reason === 'frozen'
+                ? 'Destination account is frozen.'
+                : 'Destination cannot receive transfers.',
+        });
       }
       if (
-        (from.type === AccountType.CHECKING || from.type === AccountType.SAVINGS) &&
+        isDeposit(from) &&
         from.balanceCents < body.amountCents
       ) {
         throw new BadRequestException({ code: 'INSUFFICIENT_FUNDS', message: 'Insufficient funds' });

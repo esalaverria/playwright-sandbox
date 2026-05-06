@@ -8,11 +8,29 @@ const LABELS: Record<string, string> = {
   CARD_REQUESTED: 'Requested a new card',
   CARD_CANCELLED: 'Cancelled a card',
   CARD_LOST_REPORTED: 'Reported card lost',
+  CARD_LOST_REPLACED: 'Replaced lost card',
   CARD_FROZEN: 'Froze card',
   CARD_UNFROZEN: 'Unfroze card',
   OVERLIMIT_TOGGLED: 'Updated over-limit setting',
   CARD_DETAILS_VIEWED: 'Viewed full card details',
 };
+
+function humanMeta(meta: Record<string, unknown> | null): string {
+  if (!meta || Object.keys(meta).length === 0) return '—';
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(meta)) {
+    const label =
+      k === 'accountId'
+        ? 'Account'
+        : k === 'newAccountId'
+          ? 'New card'
+          : k === 'lostAccountId'
+            ? 'Previous card'
+            : k.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+    parts.push(`${label}: ${String(v)}`);
+  }
+  return parts.join(' · ');
+}
 
 export function ActivityPage() {
   const { data, isFetching } = useQuery({
@@ -39,29 +57,30 @@ export function ActivityPage() {
       <Paper
         elevation={0}
         sx={{
-          borderRadius: 3,
+          borderRadius: 2,
           border: '1px solid',
           borderColor: 'divider',
           overflow: 'hidden',
+          p: { xs: 1.5, sm: 2 },
         }}
       >
         <Table size="small" data-testid={!isFetching && data !== undefined ? 'activity-ready' : undefined}>
           <TableHead sx={{ bgcolor: 'action.hover' }}>
             <TableRow>
-              <TableCell>When</TableCell>
-              <TableCell>Action</TableCell>
-              <TableCell>Details</TableCell>
+              <TableCell sx={{ py: 1.5 }}>When</TableCell>
+              <TableCell sx={{ py: 1.5 }}>Action</TableCell>
+              <TableCell sx={{ py: 1.5 }}>Details</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {(data ?? []).map((row) => (
               <TableRow key={row.id} hover>
-                <TableCell>{new Date(row.createdAt).toLocaleString()}</TableCell>
-                <TableCell>
+                <TableCell sx={{ py: 1.5, verticalAlign: 'top' }}>{new Date(row.createdAt).toLocaleString()}</TableCell>
+                <TableCell sx={{ py: 1.5, verticalAlign: 'top' }}>
                   <Chip size="small" label={LABELS[row.action] ?? row.action} color="primary" variant="outlined" />
                 </TableCell>
-                <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
-                  {row.meta ? JSON.stringify(row.meta) : '—'}
+                <TableCell sx={{ py: 1.5, verticalAlign: 'top', fontSize: 13, color: 'text.secondary', maxWidth: 480 }}>
+                  {humanMeta(row.meta)}
                 </TableCell>
               </TableRow>
             ))}

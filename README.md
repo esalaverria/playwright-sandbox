@@ -6,8 +6,11 @@ Monorepo layout:
 - **`frontend/`** — Vite + React + MUI SPA
 - **`docker-compose.yml`** — Postgres (port **5432**), API (**4000**), web/nginx (**3000**)
 - **`tests/`** — Playwright E2E specs and **page objects** (`tests/page-objects/`)
+- **`docs/PRODUCT.md`** — concise **business rules** for anyone writing tests or scenarios (accounts, cards, bill pay, transfers)
 
 Copy **`.env.example`** for local tooling env vars; Compose injects DB/JWT values for containers.
+
+**Feature snapshot:** Bill pay supports **scheduled** and **instant** payments; scheduled rows show **pay-from** / **memo**, can be **edited**, and flag an **invalid** funding account when needed. **Transfers** debit **checking/savings only** (credit cards use **Pay card** / **bill pay** flows). **Cards**: cancel requires **zero balance**; **report lost** replaces the card and **moves history**. UI includes **breadcrumbs**, **toasts** (top-right), and **payee** add/delete confirmations.
 
 ---
 

@@ -46,6 +46,25 @@ export class AccountsService {
     private transfers: TransfersService,
   ) {}
 
+  private async recomputeLedgerBalances(tx: Prisma.TransactionClient, accountId: string) {
+    const entries = await tx.ledgerEntry.findMany({
+      where: { accountId },
+      orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }],
+    });
+    let bal = 0;
+    for (const e of entries) {
+      bal += e.amountCents;
+      await tx.ledgerEntry.update({
+        where: { id: e.id },
+        data: { balanceAfterCents: bal },
+      });
+    }
+    await tx.account.update({
+      where: { id: accountId },
+      data: { balanceCents: bal },
+    });
+  }
+
   async logActivity(userId: string, action: string, meta?: Record<string, unknown>) {
     await this.prisma.userActivity.create({
       data: {
@@ -174,25 +193,92 @@ export class AccountsService {
     return { ok: true };
   }
 
-  async setCardLifecycle(
-    userId: string,
-    accountId: string,
-    lifecycle: typeof CLS.CANCELLED | typeof CLS.LOST_REPORTED,
-  ) {
+  async setCardLifecycle(userId: string, accountId: string, lifecycle: typeof CLS.CANCELLED) {
     const acc = await this.assertOwnOpenAccount(userId, accountId);
     if (acc.type !== AccountType.CREDIT) {
       throw new BadRequestException('Not a credit card account');
     }
+    if (lifecycle !== CLS.CANCELLED) {
+      throw new BadRequestException('Unsupported lifecycle update');
+    }
+    const debtCents = Math.max(0, -acc.balanceCents);
+    if (debtCents > 0) {
+      throw new BadRequestException({
+        code: 'CARD_HAS_BALANCE',
+        message: 'Pay the remaining balance before closing this card.',
+      });
+    }
     await this.prisma.account.update({
       where: { id: accountId },
-      data: { cardLifecycle: lifecycle, frozen: true },
+      data: { cardLifecycle: CLS.CANCELLED, frozen: true },
     });
-    await this.logActivity(
-      userId,
-      lifecycle === CLS.CANCELLED ? 'CARD_CANCELLED' : 'CARD_LOST_REPORTED',
-      { accountId },
-    );
-    return { ok: true, cardLifecycle: lifecycle };
+    await this.logActivity(userId, 'CARD_CANCELLED', { accountId });
+    return { ok: true, cardLifecycle: CLS.CANCELLED };
+  }
+
+  /** Issue a replacement card, move ledger history, and close the lost card. */
+  async reportLostAndReplace(userId: string, lostAccountId: string) {
+    const old = await this.assertOwnOpenAccount(userId, lostAccountId);
+    if (old.type !== AccountType.CREDIT) {
+      throw new BadRequestException('Not a credit card account');
+    }
+    if (old.cardLifecycle !== CLS.ACTIVE) {
+      throw new BadRequestException({ code: 'CARD_NOT_ACTIVE', message: 'Card is not active' });
+    }
+
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const brand = old.cardBrand ?? CardBrand.VISA;
+    const pan = generatePan(brand);
+    const now = new Date();
+    const expYear = now.getUTCFullYear() + 3;
+    const expMonth = now.getUTCMonth() + 1;
+
+    return this.prisma.$transaction(async (tx) => {
+      const replacement = await tx.account.create({
+        data: {
+          userId,
+          type: AccountType.CREDIT,
+          nickname: `${old.nickname.replace(/\s*\(replacement\)\s*$/i, '').trim()} (replacement)`,
+          mask: maskFromPan(pan),
+          panFull: pan,
+          cvv: generateCvv(),
+          expMonth,
+          expYear,
+          nameOnCard: old.nameOnCard ?? user.fullName.toUpperCase(),
+          cardBrand: brand,
+          cardLifecycle: CLS.ACTIVE,
+          creditLimitCents: old.creditLimitCents,
+          allowOverLimit: old.allowOverLimit,
+          frozen: false,
+          balanceCents: 0,
+        },
+        select: listSelect,
+      });
+
+      await tx.ledgerEntry.updateMany({
+        where: { accountId: old.id },
+        data: { accountId: replacement.id },
+      });
+
+      await this.recomputeLedgerBalances(tx, replacement.id);
+
+      await tx.account.update({
+        where: { id: old.id },
+        data: {
+          balanceCents: 0,
+          closedAt: new Date(),
+          cardLifecycle: CLS.LOST_REPORTED,
+          frozen: true,
+        },
+      });
+
+      await this.logActivity(userId, 'CARD_LOST_REPLACED', {
+        lostAccountId: old.id,
+        newAccountId: replacement.id,
+      });
+
+      return { ok: true, account: replacement };
+    });
   }
 
   async getSensitiveCardDetails(userId: string, accountId: string) {

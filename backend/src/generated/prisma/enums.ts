@@ -35,6 +35,14 @@ export const PaymentStatus = {
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
 
+export const ScheduledPaymentKind = {
+  SCHEDULED: 'SCHEDULED',
+  INSTANT: 'INSTANT'
+} as const
+
+export type ScheduledPaymentKind = (typeof ScheduledPaymentKind)[keyof typeof ScheduledPaymentKind]
+
+
 export const CardBrand = {
   VISA: 'VISA',
   MASTERCARD: 'MASTERCARD'
